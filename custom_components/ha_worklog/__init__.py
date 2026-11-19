@@ -9,9 +9,9 @@ from homeassistant.helpers.event import async_track_state_change_event, async_tr
 
 from .const import DOMAIN
 from .coordinator import WorklogCoordinator
-from .sensor import WorklogDaySensor, WorklogDurationSensor
 
-PLATFORMS = ["sensor"]
+PLATFORMS = ["sensor", "calendar"]
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a configured work log."""
@@ -40,9 +40,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_refresh()
     return True
 
+
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload the integration after an options change."""
     await hass.config_entries.async_reload(entry.entry_id)
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a work log."""
