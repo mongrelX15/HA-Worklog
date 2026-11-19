@@ -36,6 +36,14 @@ Entfernen: Integration in Home Assistant löschen, danach den Ordner `custom_com
 - Die Messung kann höchstens die Qualität des konfigurierten Arbeitssignals erreichen; ein Ping-Sensor beweist keine tatsächliche Arbeitszeit.
 - Ein Test in einer separaten HA-Testinstanz wird empfohlen.
 
+## Projekt und Entwicklungsgrundsätze
+
+HA Work-Log wird mit KI-Unterstützung entwickelt (Vibecoding). Anforderungen, fachliche Entscheidungen und Release-Freigaben liegen beim Projektverantwortlichen. KI unterstützt bei Planung, Architektur, Implementierung, Dokumentation und Tests.
+
+Änderungen werden in Git versioniert und nachvollziehbar veröffentlicht. Der vorgesehene Ablauf ist, neue Änderungen zuerst im `beta`-Zweig zu erproben und geprüfte Änderungen anschließend in `main` als stabile Releases zu veröffentlichen.
+
+Die GitHub-Actions-Pipeline prüft Python-Syntax und die vorhandenen Unit-Tests. Vor einer stabilen Freigabe sollen Änderungen zusätzlich vom Maintainer geprüft und in Home Assistant erprobt werden. Beta-Versionen können unvollständig sein oder Fehler enthalten.
+
 ## Entwicklung
 
 Entwicklungszweig: `beta`. Stable liegt in `main` und wird durch diese Version nicht verändert. Die GitHub-Actions-Pipeline prüft Syntax und Unit-Tests.
