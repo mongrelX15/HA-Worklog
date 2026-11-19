@@ -3,11 +3,12 @@ class HAWorklogPanel extends HTMLElement {
     super();
     this._tab = "calendar";
     this._month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    this._selected = this._isoDate(new Date());
+    this._selected = null;
     this._events = [];
     this._loadedMonth = "";
     this._busy = false;
     this._message = "";
+    this._messageTimer = undefined;
     this._unsubscribe = undefined;
   }
 
@@ -103,7 +104,41 @@ class HAWorklogPanel extends HTMLElement {
   }
 
   _eventForDay(day) {
+    if (!day) return undefined;
     return this._events.find((event) => (event.start || "").slice(0, 10) === day);
+  }
+
+  _monthStats() {
+    const prefix = this._isoDate(this._month).slice(0, 7);
+    const days = new Map();
+    this._events.forEach((event) => {
+      const date = (event.start || "").slice(0, 10);
+      if (!date.startsWith(prefix)) return;
+      const type = this._type(event);
+      if (!type) return;
+      if (!days.has(date)) days.set(date, new Set());
+      days.get(date).add(type);
+    });
+    const entries = [...days.values()];
+    const workTypes = new Set(["office", "home_office", "office_and_home_office"]);
+    return {
+      workdays: entries.filter((types) => [...types].some((type) => workTypes.has(type))).length,
+      office: entries.filter((types) => types.has("office") || types.has("office_and_home_office")).length,
+      homeOffice: entries.filter((types) => types.has("home_office") || types.has("office_and_home_office")).length,
+      vacation: entries.filter((types) => types.has("vacation")).length,
+      sick: entries.filter((types) => types.has("sick_leave")).length,
+    };
+  }
+
+  _showMessage(message) {
+    if (this._messageTimer) clearTimeout(this._messageTimer);
+    this._message = message;
+    this._render();
+    this._messageTimer = setTimeout(() => {
+      this._message = "";
+      this._messageTimer = undefined;
+      this._render();
+    }, 3000);
   }
 
   _escape(value) {
@@ -115,6 +150,7 @@ class HAWorklogPanel extends HTMLElement {
     const locale = this._hass.locale?.language || "de-DE";
     const title = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(this._month);
     const selectedEvent = this._eventForDay(this._selected);
+    const monthStats = this._monthStats();
     const selectedType = this._type(selectedEvent);
     const monthStart = new Date(this._month.getFullYear(), this._month.getMonth(), 1);
     const offset = (monthStart.getDay() + 6) % 7;
@@ -142,11 +178,11 @@ class HAWorklogPanel extends HTMLElement {
       .map((item) => "<li>" + this._escape(item.attributes.friendly_name || item.entity_id) + ": " + this._escape(item.state) + "</li>").join("");
     const tab = this._tab;
     const content = tab === "calendar"
-      ? "<ha-card><div class='calendar-head'><button class='month-nav' data-action='prev' aria-label='Vorheriger Monat'>‹</button><h2>" + title + "</h2><button class='today-nav' data-action='today' aria-label='Zum heutigen Datum springen'>Heute</button><button class='month-nav' data-action='next' aria-label='Nächster Monat'>›</button></div><div class='grid'>" + headers + cells + "</div><div class='selection'><h3>" + this._selected + "</h3><p>" + this._label(selectedType) + (selectedEvent?.description?.includes("Manuell geändert") ? " · manuell geändert" : "") + "</p><div class='actions'><button data-type='office'>Bürotag</button><button data-type='home_office'>Homeoffice</button><button data-type='no_work'>Kein Arbeitstag</button><button data-type='vacation'>Urlaub</button><button data-type='sick_leave'>Krankheit</button><button data-type='automatic'>Automatisch</button></div><p class='message'>" + this._message + "</p></div></ha-card>"
+      ? "<ha-card><div class='calendar-head'><button class='month-nav' data-action='prev' aria-label='Vorheriger Monat'>‹</button><h2>" + title + "</h2><button class='today-nav' data-action='today' aria-label='Zum heutigen Datum springen'>Heute</button><button class='month-nav' data-action='next' aria-label='Nächster Monat'>›</button></div><div class='stats'>" + [{ label: "Arbeitstage", value: monthStats.workdays }, { label: "Büro", value: monthStats.office }, { label: "Homeoffice", value: monthStats.homeOffice }, { label: "Urlaub", value: monthStats.vacation }, { label: "Krankheit", value: monthStats.sick }].map((item) => "<div class='stat'><span>" + item.label + "</span><strong>" + item.value + "</strong></div>").join("") + "</div><div class='grid'>" + headers + cells + "</div>" + (this._selected ? "<div class='selection'><h3>" + this._selected + "</h3><p>" + this._label(selectedType) + (selectedEvent?.description?.includes('Manuell geändert') ? " · manuell geändert" : "") + "</p><div class='actions'><button data-type='office'>Bürotag</button><button data-type='home_office'>Homeoffice</button><button data-type='no_work'>Kein Arbeitstag</button><button data-type='vacation'>Urlaub</button><button data-type='sick_leave'>Krankheit</button><button data-type='automatic'>Automatisch</button></div><p class='message'>" + this._message + "</p></div>" : "") + "</ha-card>"
       : tab === "config"
         ? "<ha-card><h2>Konfigurator</h2><p>Die Beta erkennt einen Tag ab 30 Minuten in der Arbeitszone oder mit aktivem Homeoffice-Sensor.</p><p>Sensoren und Arbeitszone werden über die Einstellungen der Integration gewählt.</p><ul>" + (sensorLines || "<li>Die Entitäten erscheinen nach dem ersten Erkennungslauf.</li>") + "</ul></ha-card>"
         : "<ha-card><h2>Export</h2><p>Der Export ist für eine spätere Version vorgesehen.</p></ha-card>";
-    this.innerHTML = "<style>ha-worklog-panel{display:block;color:var(--primary-text-color,inherit);background:var(--primary-background-color,transparent);min-height:100vh;font-family:var(--paper-font-body1_-_font-family,Roboto,Noto,sans-serif)}.page{max-width:1050px;margin:auto;padding:24px}.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}.top h1{font-size:24px;font-weight:500;margin:0}.tabs{display:flex;gap:8px;border-bottom:1px solid var(--divider-color);margin-bottom:20px}.tabs button,.actions button,.month-nav,.today-nav{font:inherit;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:8px;padding:9px 14px;cursor:pointer}.tabs button.active{color:var(--primary-color);border-color:var(--primary-color)}ha-card{display:block;background:var(--card-background-color);color:var(--primary-text-color);border-radius:12px;padding:20px;box-shadow:var(--ha-card-box-shadow,0 2px 8px rgba(0,0,0,.12))}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.calendar-head h2{font-size:20px;font-weight:500;margin:0;text-transform:capitalize}.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:var(--secondary-text-color);font-size:13px;padding:8px 0}.weekday.weekend-label{color:var(--warning-color,var(--primary-color));font-weight:600}.day{min-height:44px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);font:inherit;cursor:pointer}.day.weekend{background:var(--secondary-background-color,var(--card-background-color));border-bottom:3px solid var(--warning-color,var(--primary-color))}.day.outside{opacity:.45}.day.selected{outline:2px solid var(--primary-color)}.day.type-office,.day.type-office_and_home_office{background:var(--info-color,#039be5);color:var(--text-primary-color,#fff)}.day.type-home_office{background:var(--success-color,#43a047);color:var(--text-primary-color,#fff)}.day.type-vacation{background:var(--warning-color,#fbc02d);color:var(--primary-text-color)}.day.type-sick_leave,.day.type-needs_review{background:var(--error-color,#db4437);color:var(--text-primary-color,#fff)}.day.type-tracking{background:var(--state-icon-color,#9e9e9e)}.selection{border-top:1px solid var(--divider-color);margin-top:20px;padding-top:12px}.selection h3{font-size:17px;margin:0 0 6px}.selection p{color:var(--secondary-text-color)}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{padding:8px 10px}.message{min-height:1em}ha-card>h2{font-weight:500}.page li{margin:8px 0}@media(max-width:600px){.page{padding:12px}.day{min-height:38px}.grid{gap:3px}.tabs{overflow-x:auto}.tabs button{white-space:nowrap;padding:8px 10px}}</style><div class='page'><div class='top'><ha-menu-button></ha-menu-button><h1>HA Work-Log</h1></div><div class='tabs'><button data-tab='calendar' class='" + (tab === "calendar" ? "active" : "") + "'>Kalender</button><button data-tab='config' class='" + (tab === "config" ? "active" : "") + "'>Konfigurator</button><button data-tab='export' class='" + (tab === "export" ? "active" : "") + "'>Export</button></div>" + content + "</div>";
+    this.innerHTML = "<style>ha-worklog-panel{display:block;color:var(--primary-text-color,inherit);background:var(--primary-background-color,transparent);min-height:100vh;font-family:var(--paper-font-body1_-_font-family,Roboto,Noto,sans-serif)}.page{max-width:1050px;margin:auto;padding:24px}.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}.top h1{font-size:24px;font-weight:500;margin:0}.tabs{display:flex;gap:8px;border-bottom:1px solid var(--divider-color);margin-bottom:20px}.tabs button,.actions button,.month-nav,.today-nav{font:inherit;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:8px;padding:9px 14px;cursor:pointer}.tabs button.active{color:var(--primary-color);border-color:var(--primary-color)}ha-card{display:block;background:var(--card-background-color);color:var(--primary-text-color);border-radius:12px;padding:20px;box-shadow:var(--ha-card-box-shadow,0 2px 8px rgba(0,0,0,.12))}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.calendar-head h2{font-size:20px;font-weight:500;margin:0;text-transform:capitalize}.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:var(--secondary-text-color);font-size:13px;padding:8px 0}.weekday.weekend-label{color:var(--warning-color,var(--primary-color));font-weight:600}.day{min-height:44px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);font:inherit;cursor:pointer}.day.weekend{background:var(--secondary-background-color,var(--card-background-color));border-bottom:3px solid var(--warning-color,var(--primary-color))}.day.outside{opacity:.45}.day.selected{outline:2px solid var(--primary-color)}.day.type-office,.day.type-office_and_home_office{background:var(--info-color,#039be5);color:var(--text-primary-color,#fff)}.day.type-home_office{background:var(--success-color,#43a047);color:var(--text-primary-color,#fff)}.day.type-vacation{background:var(--warning-color,#fbc02d);color:var(--primary-text-color)}.day.type-sick_leave,.day.type-needs_review{background:var(--error-color,#db4437);color:var(--text-primary-color,#fff)}.day.type-tracking{background:var(--state-icon-color,#9e9e9e)}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 16px}.stat{display:flex;flex-direction:column;gap:4px;background:var(--secondary-background-color,var(--card-background-color));border-radius:8px;padding:10px 12px}.stat span{color:var(--secondary-text-color);font-size:12px}.stat strong{font-size:20px;font-weight:500}.selection{border-top:1px solid var(--divider-color);margin-top:20px;padding-top:12px}.selection h3{font-size:17px;margin:0 0 6px}.selection p{color:var(--secondary-text-color)}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{padding:8px 10px}.message:empty{display:none}.message{min-height:1em}ha-card>h2{font-weight:500}.page li{margin:8px 0}@media(max-width:600px){.page{padding:12px}.day{min-height:38px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{gap:3px}.tabs{overflow-x:auto}.tabs button{white-space:nowrap;padding:8px 10px}}</style><div class='page'><div class='top'><ha-menu-button></ha-menu-button><h1>HA Work-Log</h1></div><div class='tabs'><button data-tab='calendar' class='" + (tab === "calendar" ? "active" : "") + "'>Kalender</button><button data-tab='config' class='" + (tab === "config" ? "active" : "") + "'>Konfigurator</button><button data-tab='export' class='" + (tab === "export" ? "active" : "") + "'>Export</button></div>" + content + "</div>";
     const menu = this.querySelector("ha-menu-button");
     if (menu) menu.hass = this._hass;
     this.querySelectorAll("[data-tab]").forEach((button) => button.addEventListener("click", () => {
@@ -160,8 +196,9 @@ class HAWorklogPanel extends HTMLElement {
     }));
     this.querySelector("[data-action='prev']")?.addEventListener("click", () => {
       this._month = new Date(this._month.getFullYear(), this._month.getMonth() - 1, 1);
-      this._selected = this._isoDate(this._month);
+      this._selected = null;
       this._loadedMonth = "";
+      this._render();
       this._loadEvents();
     });
     this.querySelector("[data-action='today']")?.addEventListener("click", () => {
@@ -175,8 +212,9 @@ class HAWorklogPanel extends HTMLElement {
     });
     this.querySelector("[data-action='next']")?.addEventListener("click", () => {
       this._month = new Date(this._month.getFullYear(), this._month.getMonth() + 1, 1);
-      this._selected = this._isoDate(this._month);
+      this._selected = null;
       this._loadedMonth = "";
+      this._render();
       this._loadEvents();
     });
     this.querySelectorAll("[data-type]").forEach((button) => button.addEventListener("click", async () => {
@@ -189,11 +227,11 @@ class HAWorklogPanel extends HTMLElement {
           date: this._selected,
           day_type: button.dataset.type,
         });
-        this._message = "Änderung gespeichert.";
         this._loadedMonth = "";
         await this._loadEvents();
+        this._showMessage("Änderung gespeichert.");
       } catch (error) {
-        this._message = "Änderung konnte nicht gespeichert werden.";
+        this._showMessage("Änderung konnte nicht gespeichert werden.");
       } finally {
         this._busy = false;
         this._render();
