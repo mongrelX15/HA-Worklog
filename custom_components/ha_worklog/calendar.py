@@ -21,6 +21,8 @@ DAY_LABELS = {
     "office": "Bürotag",
     "office_and_home_office": "Büro- und Homeoffice-Signale",
     "needs_review": "Bitte prüfen",
+    "vacation": "Urlaub",
+    "sick_leave": "Krankheit",
 }
 
 
@@ -61,7 +63,7 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
     def _record_for_day(self, day: date) -> dict[str, Any] | None:
         """Return live data for today and stored data for previous days."""
         if day.isoformat() == self.coordinator.data["date"]:
-            return {"day_type": self.coordinator.data["day_type"]}
+            return self.coordinator.data
         return self.coordinator._history.get(day.isoformat())
 
     @staticmethod
@@ -69,11 +71,17 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
         """Create a calendar event without displaying measured time."""
         day_type = record.get("day_type", "needs_review")
         summary = DAY_LABELS.get(day_type, DAY_LABELS["needs_review"])
+        automatic = record.get("automatic_day_type", day_type)
+        automatic_summary = DAY_LABELS.get(automatic, DAY_LABELS["needs_review"])
+        manual_override = record.get("manual_override")
+        description = f"Automatische Tageserkennung: {automatic_summary}."
+        if manual_override:
+            description += f" Manuell geändert zu: {summary}."
         return CalendarEvent(
             start=day,
             end=day + timedelta(days=1),
             summary=summary,
-            description=f"Automatische Tageserkennung: {summary}.",
+            description=description,
         )
 
     async def async_get_events(

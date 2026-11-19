@@ -23,7 +23,7 @@ Die Integration stellt einen **Arbeitskalender** und den Sensor **Tagestyp** ber
 
 Das Ziel ist ein von der Integration mitgeliefertes Panel **HA Work-Log**, das automatisch in der Seitenleiste erscheint. Nutzer sollen keine Lovelace-Konfiguration manuell erstellen oder importieren müssen.
 
-Das Panel wird die Reiter **Kalender**, **Konfigurator** und **Export** enthalten. Es wird mit Home-Assistant-Elementen und Design-Variablen gestaltet, damit es dem aktiven Theme und Dark Mode folgt. Dieses Panel ist noch nicht in der Beta enthalten und wird vor dem nächsten Release umgesetzt.
+Das Panel **HA Work-Log** erscheint nach dem Einrichten automatisch in der Seitenleiste. Es enthält die Reiter **Kalender**, **Konfigurator** und **Export**. Im Kalender können Tage manuell korrigiert oder wieder auf die automatische Erkennung zurückgestellt werden. Die Tageshistorie bleibt lokal in Home Assistant gespeichert. Das Panel nutzt Home-Assistant-Designvariablen und folgt damit dem aktiven Theme und Dark Mode.
 
 ### Installation zum Testen
 

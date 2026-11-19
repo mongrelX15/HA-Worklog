@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -28,6 +28,8 @@ DAY_TYPES = (
     "office",
     "office_and_home_office",
     "needs_review",
+    "vacation",
+    "sick_leave",
 )
 
 
@@ -105,8 +107,16 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         day_type = record.get("day_type", "needs_review")
         if day_type not in DAY_TYPES:
             day_type = "needs_review"
+        automatic_day_type = record.get("automatic_day_type", day_type)
+        if automatic_day_type not in DAY_TYPES:
+            automatic_day_type = day_type
+        manual_override = record.get("manual_override")
+        if manual_override not in (*DAY_TYPES, "vacation", "sick_leave"):
+            manual_override = None
         return {
-            "day_type": day_type,
+            "day_type": manual_override or day_type,
+            "automatic_day_type": automatic_day_type,
+            "manual_override": manual_override,
             "office_seconds": round(office_seconds),
             "homeoffice_seconds": round(homeoffice_seconds),
         }
@@ -115,9 +125,37 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Return the persisted classification for the current date."""
         return {
             "day_type": self.data["day_type"],
+            "automatic_day_type": self.data["automatic_day_type"],
+            "manual_override": self.data["manual_override"],
             "office_seconds": round(self._office_seconds),
             "homeoffice_seconds": round(self._homeoffice_seconds),
         }
+
+    async def async_set_day_override(self, day_string: str, day_type: str) -> None:
+        """Persist a manual day classification or restore automatic detection."""
+        day = date.fromisoformat(day_string)
+        key = day.isoformat()
+        existing = self._history.get(key, {})
+        if key == self._date:
+            automatic = self.data.get("automatic_day_type", self.data["day_type"])
+            office_seconds = round(self._office_seconds)
+            homeoffice_seconds = round(self._homeoffice_seconds)
+        else:
+            automatic = existing.get("automatic_day_type", existing.get("day_type", "no_work"))
+            office_seconds = int(existing.get("office_seconds", 0))
+            homeoffice_seconds = int(existing.get("homeoffice_seconds", 0))
+        override = None if day_type == "automatic" else day_type
+        self._history[key] = {
+            "day_type": override or automatic,
+            "automatic_day_type": automatic,
+            "manual_override": override,
+            "office_seconds": office_seconds,
+            "homeoffice_seconds": homeoffice_seconds,
+        }
+        if key == self._date:
+            self.data = self._snapshot()
+        await self._async_save()
+        self.async_set_updated_data(self._snapshot())
 
     async def _async_save(self) -> None:
         """Persist the current day and history locally."""
@@ -192,7 +230,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _snapshot(self) -> dict[str, Any]:
         """Return the current day classification and source status."""
-        day_type = classify_day(
+        automatic_day_type = classify_day(
             self._office_seconds,
             self._homeoffice_seconds,
             self._office_active,
@@ -200,6 +238,11 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._office_source_valid,
             self._homeoffice_source_valid,
         )
+        saved_record = self._history.get(self._date, {})
+        manual_override = saved_record.get("manual_override")
+        if manual_override not in (*DAY_TYPES, "vacation", "sick_leave"):
+            manual_override = None
+        day_type = manual_override or automatic_day_type
         seconds = round(self._office_seconds + self._homeoffice_seconds)
         return {
             "date": self._date,
@@ -212,6 +255,8 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "location": self._location,
             "threshold_minutes": self.threshold_seconds // 60,
             "day_type": day_type,
+            "automatic_day_type": automatic_day_type,
+            "manual_override": manual_override,
             "office_source_valid": self._office_source_valid,
             "homeoffice_source_valid": self._homeoffice_source_valid,
         }
