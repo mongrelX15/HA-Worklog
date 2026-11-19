@@ -47,13 +47,10 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def async_get_options_flow(config_entry):
-        return WorklogOptionsFlow(config_entry)
+        return WorklogOptionsFlow()
 
 class WorklogOptionsFlow(config_entries.OptionsFlow):
     """Allow changing tracking options after setup."""
-
-    def __init__(self, config_entry):
-        self.config_entry = config_entry
 
     async def async_step_init(self, user_input: dict | None = None):
         if user_input is not None:
