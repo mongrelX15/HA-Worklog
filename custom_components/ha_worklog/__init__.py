@@ -24,12 +24,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     def changed(_event) -> None:
         hass.async_create_task(coordinator.async_refresh())
 
+    async def refresh_interval(_now) -> None:
+        await coordinator.async_refresh()
+
     tracked = [coordinator.person_entity, coordinator.signal_entity]
     if coordinator.office_zone_entity:
         tracked.append(coordinator.office_zone_entity)
     remove_state_listener = async_track_state_change_event(hass, tracked, changed)
     remove_timer = async_track_time_interval(
-        hass, lambda _now: coordinator.async_refresh(), timedelta(minutes=1)
+        hass, refresh_interval, timedelta(minutes=1)
     )
     entry.async_on_unload(remove_state_listener)
     entry.async_on_unload(remove_timer)
