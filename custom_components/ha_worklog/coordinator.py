@@ -1,4 +1,4 @@
-"""Coordinator that measures the current day's work signal."""
+"""Coordinator that measures and stores each day's work information."""
 from __future__ import annotations
 
 import logging
@@ -22,6 +22,7 @@ from .logic import classify_day
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Track overlap between a work signal and configured presence."""
 
@@ -38,15 +39,72 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._active = False
         self._location: str | None = None
         self._valid = False
+        self._history: dict[str, dict[str, Any]] = {}
+        self._date = dt_util.now().date().isoformat()
 
     async def async_initialize(self) -> None:
-        """Restore today's accumulated time without counting HA downtime."""
+        """Restore today's values and recover the saved day into the calendar."""
         saved = await self.store.async_load()
         today = dt_util.now().date().isoformat()
-        if saved and saved.get("date") == today:
-            self._seconds = float(saved.get("seconds", 0))
+        self._date = today
+
+        if saved:
+            history = saved.get("history", {})
+            if isinstance(history, dict):
+                self._history = {
+                    str(day): item for day, item in history.items()
+                    if isinstance(day, str) and isinstance(item, dict)
+                }
+
+            saved_date = saved.get("date")
+            if saved_date == today:
+                self._seconds = float(saved.get("seconds", 0))
+                self._location = saved.get("location")
+                self._valid = bool(saved.get("valid", self._location is not None))
+            elif isinstance(saved_date, str) and saved_date < today:
+                self._history[saved_date] = self._make_history_record(
+                    float(saved.get("seconds", 0)),
+                    saved.get("location"),
+                    saved.get("day_type"),
+                    bool(saved.get("valid", False)),
+                )
+
         self._last_update = dt_util.utcnow()
         self.data = self._snapshot()
+        self._history[today] = self._make_history_record(
+            self._seconds, self._location, self.data["day_type"], self._valid
+        )
+        await self._async_save()
+
+    def _make_history_record(
+        self,
+        seconds: float,
+        location: str | None,
+        day_type: str | None = None,
+        valid: bool = True,
+    ) -> dict[str, Any]:
+        """Build a serializable calendar record for one day."""
+        if day_type not in ("no_work", "tracking", "home_office", "office", "needs_review"):
+            day_type = classify_day(
+                seconds, self.minimum_hours, location, False, valid and location is not None
+            )
+        return {
+            "seconds": round(seconds),
+            "hours": round(seconds / 3600, 2),
+            "location": location,
+            "day_type": day_type,
+        }
+
+    async def _async_save(self) -> None:
+        """Persist the live day and accumulated history."""
+        await self.store.async_save({
+            "date": self._date,
+            "seconds": self._seconds,
+            "location": self._location,
+            "day_type": self.data["day_type"],
+            "valid": self._valid,
+            "history": self._history,
+        })
 
     def _presence(self) -> tuple[str | None, bool]:
         person = self.hass.states.get(self.person_entity)
@@ -73,11 +131,13 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Accumulate elapsed seconds only while both configured signals are active."""
         now = dt_util.utcnow()
         current_date = dt_util.now().date().isoformat()
-        if not hasattr(self, "_date"):
-            self._date = current_date
         if current_date != self._date:
+            self._history[self._date] = self._make_history_record(
+                self._seconds, self._location, self.data.get("day_type"), self._valid
+            )
             self._date = current_date
             self._seconds = 0.0
+
         location, signal_on = self._presence()
         self._valid = location is not None
         active = signal_on and location in ("home", "office")
@@ -89,18 +149,19 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._active = active
         self._location = location
         self.data = self._snapshot()
-        await self.store.async_save({
-            "date": self._date,
-            "seconds": self._seconds,
-        })
+        self._history[self._date] = self._make_history_record(
+            self._seconds, self._location, self.data["day_type"], self._valid
+        )
+        await self._async_save()
         return self.data
 
     def _snapshot(self) -> dict[str, Any]:
+        """Return the current day's state for sensors and the calendar."""
         day_type = classify_day(
             self._seconds, self.minimum_hours, self._location, self._active, self._valid
         )
         return {
-            "date": getattr(self, "_date", dt_util.now().date().isoformat()),
+            "date": self._date,
             "seconds": round(self._seconds),
             "hours": round(self._seconds / 3600, 2),
             "active": self._active,
