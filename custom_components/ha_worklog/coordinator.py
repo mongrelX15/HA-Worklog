@@ -1,7 +1,8 @@
 """Coordinator that measures the current day's work signal."""
 from __future__ import annotations
 
-from datetime import date, datetime
+import logging
+from datetime import datetime
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -19,11 +20,13 @@ from .const import (
 )
 from .logic import classify_day
 
+_LOGGER = logging.getLogger(__name__)
+
 class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Track overlap between a work signal and configured presence."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        super().__init__(hass, logger=__import__("logging").getLogger(__name__), name=DOMAIN, update_interval=None)
+        super().__init__(hass, logger=_LOGGER, name=DOMAIN, update_interval=None)
         config = {**entry.data, **entry.options}
         self.person_entity = config[CONF_PERSON]
         self.signal_entity = config[CONF_WORK_SIGNAL]
@@ -49,7 +52,12 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         person = self.hass.states.get(self.person_entity)
         signal = self.hass.states.get(self.signal_entity)
         zone = self.hass.states.get(self.office_zone_entity) if self.office_zone_entity else None
-        if person is None or signal is None or person.state in ("unknown", "unavailable"):
+        if (
+            person is None
+            or signal is None
+            or person.state in ("unknown", "unavailable")
+            or signal.state in ("unknown", "unavailable")
+        ):
             return None, False
         person_state = person.state.casefold()
         office_name = (zone.attributes.get("friendly_name", "") if zone else "").casefold()

@@ -1,4 +1,11 @@
-from custom_components.ha_worklog.logic import classify_day
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
+
+logic_path = Path(__file__).parents[1] / "custom_components" / "ha_worklog" / "logic.py"
+spec = spec_from_file_location("ha_worklog_logic", logic_path)
+logic = module_from_spec(spec)
+spec.loader.exec_module(logic)
+classify_day = logic.classify_day
 
 def test_below_threshold_is_tracking():
     assert classify_day(3599, 1, "home", True) == "tracking"
