@@ -19,18 +19,17 @@ Ein Tag zählt in dieser Beta, sobald der Homeoffice-Sensor oder die Arbeitszone
 
 Die Integration stellt einen **Arbeitskalender** und den Sensor **Tagestyp** bereit. Der Kalender speichert die Tagesergebnisse lokal in Home Assistant und zeigt sie als ganztägige Einträge. Die Historie beginnt mit dieser Beta und bleibt nach einem Neustart erhalten. Bereits vergangene Tage vor dem Update können nicht rekonstruiert werden.
 
-### Dashboard
+### HA-Dashboard
 
-In Home Assistant gibt es ein separates Dashboard **HA Work-Log** mit den Reitern **Kalender**, **Konfigurator** und **Export**. Die Ansichten verwenden HA-Standardelemente und folgen daher dem aktiven Theme und Dark Mode.
+Das Ziel ist ein von der Integration mitgeliefertes Panel **HA Work-Log**, das automatisch in der Seitenleiste erscheint. Nutzer sollen keine Lovelace-Konfiguration manuell erstellen oder importieren müssen.
 
-Der Kalender zeigt die automatische Tageserkennung. Manuelle Korrektur, farbliche Tageskategorien und die vollständigen Konfigurator-Eingaben werden schrittweise ergänzt. Der Export-Reiter ist derzeit nur vorbereitet und enthält noch keine Exportfunktion.
+Das Panel wird die Reiter **Kalender**, **Konfigurator** und **Export** enthalten. Es wird mit Home-Assistant-Elementen und Design-Variablen gestaltet, damit es dem aktiven Theme und Dark Mode folgt. Dieses Panel ist noch nicht in der Beta enthalten und wird vor dem nächsten Release umgesetzt.
 
 ### Installation zum Testen
 
 1. Aktualisiere HA Work-Log über HACS auf die Beta-Version.
 2. Starte Home Assistant neu oder lade die Integration neu.
-3. Öffne das Dashboard **HA Work-Log** in der Seitenleiste.
-4. Prüfe, ob der Arbeitskalender Tagesergebnisse ohne Stundenangabe zeigt.
+3. Prüfe unter **Einstellungen → Geräte & Dienste → HA Work-Log** die Entitäten Arbeitskalender und Tagestyp.
 
 Entfernen: Integration in Home Assistant löschen, danach den Ordner `custom_components/ha_worklog` entfernen und HA neu starten.
 
