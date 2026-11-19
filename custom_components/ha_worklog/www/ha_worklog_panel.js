@@ -44,8 +44,9 @@ class HAWorklogPanel extends HTMLElement {
     if (!entityId || this._loadedMonth === monthKey || !this._hass?.connection) return;
     this._loadedMonth = monthKey;
     if (this._unsubscribe) {
-      this._unsubscribe();
+      const unsubscribe = this._unsubscribe;
       this._unsubscribe = undefined;
+      await unsubscribe();
     }
     this._events = [];
     this._render();
@@ -54,7 +55,11 @@ class HAWorklogPanel extends HTMLElement {
     try {
       this._unsubscribe = await this._hass.connection.subscribeMessage(
         (message) => {
-          this._events = message.event?.events || [];
+          this._events = Array.isArray(message?.events)
+            ? message.events
+            : Array.isArray(message?.event?.events)
+              ? message.event.events
+              : [];
           this._render();
         },
         {
@@ -65,6 +70,7 @@ class HAWorklogPanel extends HTMLElement {
         }
       );
     } catch (error) {
+      this._loadedMonth = "";
       this._message = "Der Kalender konnte nicht geladen werden.";
       this._render();
     }
