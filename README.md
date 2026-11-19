@@ -1,140 +1,41 @@
 # HA-Worklog
 
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Integration-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Status](https://img.shields.io/badge/status-in%20development-orange)](#projektstatus)
+[![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-1-0)
 
-**HA-Worklog** ist ein Home-Assistant-Projekt zur automatisierten und nachvollziehbaren Erfassung von Arbeitstagen und Homeoffice-Tagen. Es soll Arbeitszeiten und Aufenthaltsinformationen aus vorhandenen Home-Assistant-Entitäten zusammenführen und daraus belastbare Tagesauswertungen ableiten.
+**HA Work-Log** erfasst Arbeitszeit-Signale und ordnet einen Tag erst nach einer konfigurierbaren Mindestdauer als Homeoffice- oder Bürotag ein. Unklare Standorte werden ausdrücklich als prüfbedürftig markiert.
 
-> Das Repository befindet sich am Anfang der Entwicklung. Die README beschreibt die fachliche Zielsetzung und die vereinbarten Leitplanken; konkrete Entitäten, Grenzwerte und technische Implementierungsdetails werden im Verlauf der Entwicklung präzisiert.
+## Beta 0.1.0
 
-## Zielsetzung
+Die erste Beta enthält eine Home-Assistant-Custom-Integration mit Einrichtung über **Einstellungen → Geräte & Dienste → Integration hinzufügen → HA Work-Log**.
 
-Das System soll insbesondere:
+Bei der Einrichtung werden gewählt:
 
-- Arbeitstage automatisiert erkennen und dokumentieren.
-- zwischen Büro-/Präsenztagen, Homeoffice-Tagen und Nicht-Arbeitstagen unterscheiden.
-- eine konfigurierbare Mindestarbeitszeit berücksichtigen, bevor ein Tag als Arbeitstag zählt.
-- vorhandene Home-Assistant-Daten und -Entitäten nutzen, statt unnötig parallele Datenquellen aufzubauen.
-- Tagesentscheidungen nachvollziehbar machen und Korrekturen bzw. Sonderfälle ermöglichen.
-- Auswertungen bereitstellen, die bei der persönlichen Dokumentation und als Grundlage für die jährliche steuerliche Aufstellung helfen können.
+- eine Person-Entität (z. B. `person.marcel`)
+- ein Binary-Sensor, der während der Arbeit aktiv ist (z. B. ein Ping-Sensor)
+- optional die Bürozone
+- Mindestarbeitszeit in Stunden (Standard: 2)
 
-Die Erfassung ist eine technische Dokumentationshilfe und ersetzt keine Prüfung der steuerlichen Anforderungen oder der tatsächlichen Arbeitszeitaufzeichnungen.
+Die Integration legt die Sensoren **Arbeitszeit heute** und **Tagestyp** an. Die Arbeitszeit zählt, solange Arbeitssignal und konfigurierte Personenzone gleichzeitig aktiv sind. Ein Bürotag wird erkannt, wenn die Person in der ausgewählten Bürozone ist; Zuhause wird als Homeoffice gewertet. Andere oder fehlende Standorte ergeben `needs_review`.
 
-## Fachliches Konzept
+Tageswerte werden lokal in Home Assistant gespeichert und beim Neustart wiederhergestellt. Bei Tageswechsel beginnt die Zählung neu. Diese Beta verwendet Zustandswechsel und eine Minutenaktualisierung; kurze Ausfälle können daher Messlücken verursachen. Das Ergebnis ist eine Orientierung und ersetzt keine verlässliche Zeiterfassung.
 
-### Erkennung eines Arbeitstages
+### Installation zum Testen
 
-Ein Kalendertag soll nicht allein deshalb als Arbeitstag zählen, weil kurzzeitig ein Gerät oder ein Ping-Sensor aktiv ist. Es soll eine **konfigurierbare Mindestarbeitszeit** geben.
+1. Lade den Inhalt dieses Branches herunter.
+2. Kopiere `custom_components/ha_worklog` nach `<config>/custom_components/ha_worklog`.
+3. Starte Home Assistant neu.
+4. Füge unter **Einstellungen → Geräte & Dienste** die Integration **HA Work-Log** hinzu.
+5. Wähle die Person, das Arbeitssignal und die Bürozone. Verwende zunächst die Standard-Mindestarbeitszeit von 2 Stunden oder passe sie an.
 
-Die Mindestarbeitszeit ist als veränderbarer Parameter bzw. Home-Assistant-Helfer vorzusehen. Die konkrete Auswertung soll anhand der verfügbaren Signale entscheiden, ob die Schwelle erreicht wurde. Der Grenzwert darf nicht fest im Automationscode verborgen sein.
+Entfernen: Integration in Home Assistant löschen, danach den Ordner `custom_components/ha_worklog` entfernen und HA neu starten.
 
-### Erkennung von Homeoffice und Büro
+## Bekannte Grenzen dieser Beta
 
-Die Erkennung soll vorhandene Signale kombinieren, insbesondere:
+- Es gibt noch keine manuelle Tageskorrektur, Historienansicht, Monats-/Jahresauswertung oder Exportfunktion.
+- Die Messung kann höchstens die Qualität des konfigurierten Arbeitssignals erreichen; ein Ping-Sensor beweist keine tatsächliche Arbeitszeit.
+- Ein Test in einer separaten HA-Testinstanz wird empfohlen.
 
-- Anwesenheit bzw. Standort innerhalb der relevanten Home-Assistant-Zonen.
-- Erreichbarkeit der bekannten Geräte/Hosts über Ping bzw. entsprechende Binary-Sensoren.
-- Arbeitsort-Zone (insbesondere die Büro-/Arbeitszone).
-- erkannte Arbeitsdauer und zeitlicher Verlauf der Signale.
+## Entwicklung
 
-Bekannte Beispiele aus der bestehenden Umgebung sind:
-
-- `binary_sensor.heimsteuerung_sina_marcel_ping`
-- `person.marcel`
-- `zone.ble_bonn`
-
-Diese Entity-IDs sind Startpunkte aus der bestehenden Installation, keine unveränderlichen Anforderungen. Vor einer Implementierung muss geprüft werden, welche Entitäten tatsächlich existieren und welche Semantik/Zuverlässigkeit sie haben.
-
-### Tagesentscheidung und Nachvollziehbarkeit
-
-Die Tagesklassifikation soll möglichst deterministisch und erklärbar sein. Für jeden ausgewerteten Tag sollte später erkennbar sein:
-
-- welches Datum bewertet wurde,
-- ob ein Arbeitstag erkannt wurde,
-- ob der Tag als Homeoffice oder Büro/Präsenz klassifiziert wurde,
-- welche Arbeitsdauer zugrunde lag,
-- ob die Mindestarbeitszeit erreicht wurde,
-- welche Daten/Signale zur Entscheidung geführt haben,
-- ob die Klassifikation automatisch oder manuell korrigiert wurde.
-
-Fehlende oder widersprüchliche Sensorwerte dürfen nicht stillschweigend zu einer scheinbar sicheren Klassifikation führen. Unklare Fälle sollen als unbekannt bzw. prüfbedürftig behandelt werden.
-
-## Leitplanken für die Implementierung
-
-1. **Konfigurierbarkeit:** Fachliche Grenzwerte wie die Mindestarbeitszeit müssen zentral und einfach änderbar sein.
-2. **Robustheit:** Kurzzeitige Netzwerkunterbrechungen, Neustarts von Home Assistant und verspätete Sensorupdates dürfen keine doppelten oder falschen Tagesbuchungen erzeugen.
-3. **Idempotenz:** Wiederholte Ausführung derselben Auswertung darf das Tagesergebnis nicht duplizieren oder ungewollt verändern.
-4. **Transparenz:** Entscheidungen sollen über Status-, Diagnose- oder Protokollinformationen nachvollziehbar sein.
-5. **Wartbarkeit:** Logik, Konfiguration und Darstellung sollen sauber getrennt werden. Keine unnötig komplexen Einzel-Automationen.
-6. **Datensparsamkeit:** Es sollen nur die für die Tagesauswertung notwendigen Daten gespeichert werden.
-7. **Sichere Änderungen:** Neue Logik wird zuerst im Beta-Kanal erprobt und erst nach Prüfung in Stable übernommen.
-
-## Release-Kanäle
-
-Das Projekt verwendet zwei getrennte Kanäle. **Stable** ist die empfohlene Version für den regulären Betrieb. **Beta** dient der Erprobung neuer Funktionen und Änderungen.
-
-| | Stable | Beta |
-|---|---|---|
-| Zweck | Verlässlicher Regelbetrieb | Früher Zugriff auf neue Entwicklungen |
-| Inhalt | Geprüfte und freigegebene Funktionen | Neue Funktionen, Änderungen und Experimente |
-| Risiko | Möglichst gering | Höheres Änderungs- und Fehlerrisiko |
-| Änderungen | Nur nach erfolgreicher Prüfung aus Beta übernehmen | Darf sich häufiger und auch inkompatibel ändern |
-| Empfehlung | Für den produktiven Home-Assistant-Betrieb | Für Tests und kontrollierte Erprobung |
-
-### Branch-Strategie
-
-- `main` ist der Stable-Entwicklungs- und Veröffentlichungszweig.
-- `beta` enthält die jeweils zur Erprobung vorgesehenen Änderungen.
-- Neue Funktionen und Fehlerbehebungen werden zunächst in Beta entwickelt bzw. integriert.
-- Nach Tests und fachlicher Freigabe werden geeignete Änderungen von `beta` nach `main` übernommen.
-- Fehlerbehebungen, die Stable unmittelbar benötigt, können gezielt in `main` umgesetzt und anschließend nach `beta` zurückgeführt werden, damit die Zweige nicht auseinanderlaufen.
-
-### Versionierung und Kennzeichnung
-
-Es wird semantische Versionierung angestrebt:
-
-- Stable: `vMAJOR.MINOR.PATCH`, beispielsweise `v1.2.0`.
-- Beta: Vorabversionen mit Suffix, beispielsweise `v1.3.0-beta.1`.
-
-Stable-Releases werden als GitHub-Releases bzw. Tags veröffentlicht. Beta-Stände werden klar als Vorabversion gekennzeichnet. Ein Beta-Stand ist nicht automatisch für den produktiven Betrieb freigegeben.
-
-## Geplanter Funktionsumfang
-
-Die Umsetzung erfolgt schrittweise. Die folgende Reihenfolge ist eine Orientierung und keine Behauptung, dass die Funktionen bereits vorhanden sind.
-
-1. **Grundlage und Konfiguration**
-   - zentrale Konfiguration der Mindestarbeitszeit
-   - Definition der relevanten Zonen und Anwesenheitssignale
-   - klare Definition der Tagesgrenzen und Zeitzone
-
-2. **Erkennung**
-   - Ermittlung der täglichen Arbeitsdauer
-   - Erkennung von Homeoffice und Büro/Präsenz
-   - Behandlung von Unterbrechungen, Neustarts und fehlenden Sensordaten
-
-3. **Tagesprotokoll**
-   - genau ein nachvollziehbares Ergebnis pro Kalendertag
-   - Speicherung der Klassifikation und der relevanten Kennzahlen
-   - Möglichkeit zur manuellen Korrektur bzw. Kennzeichnung von Sonderfällen
-
-4. **Auswertung**
-   - Monats- und Jahresübersichten
-   - Summen für Homeoffice und Büro/Präsenz
-   - Export bzw. geeignete Zusammenfassung für die persönliche Dokumentation
-
-## Entwicklungsgrundsätze
-
-- Änderungen möglichst klein und überprüfbar halten.
-- Vor Änderungen bestehende Automationen, Helfer und Entity-IDs prüfen.
-- Keine realen Entity-IDs oder Konfigurationswerte erfinden.
-- Bei jeder fachlichen Änderung festhalten, welche Fälle sie abdeckt und welche Randfälle offenbleiben.
-- Tests für Tagesgrenzen, Zeitzonen, Sommer-/Winterzeit, Neustarts und Sensor-Ausfälle berücksichtigen.
-- Stable erst aktualisieren, wenn die Änderung im Beta-Kanal ausreichend geprüft wurde.
-
-## Projektstatus
-
-**Frühe Planungs- und Entwicklungsphase.** Die fachliche Richtung und die Release-Kanäle sind definiert. Implementierte Funktionen und unterstützte Home-Assistant-Versionen werden ergänzt, sobald sie tatsächlich vorhanden und getestet sind.
-
-## Mitwirkung und Änderungen
-
-Vor größeren Änderungen an Datenmodell, Tagesklassifikation oder Release-Struktur sollte die fachliche Auswirkung dokumentiert werden. Fehlerberichte sollten nach Möglichkeit Datum, betroffene Sensoren/Entitäten, erwartetes Ergebnis und tatsächlich beobachtetes Ergebnis enthalten. Persönliche Standort- oder Anwesenheitsdaten bitte vor dem Teilen von Logs und Screenshots entfernen.
+Entwicklungszweig: `beta`. Stable liegt in `main` und wird durch diese Version nicht verändert. Die GitHub-Actions-Pipeline prüft Syntax und Unit-Tests.
