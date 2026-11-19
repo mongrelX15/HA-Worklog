@@ -3,12 +3,11 @@
     "step": {
       "user": {
         "title": "HA Work-Log einrichten",
-        "description": "Wähle deine Person, ein Arbeitssignal und optional deine Bürozone. Das Arbeitssignal sollte während deiner Arbeitszeit aktiv sein.",
+        "description": "Wähle deine Person, den Homeoffice-Sensor und optional die Arbeitszone. Ein Tag zählt in der Beta, wenn mindestens eines der beiden Signale 30 Minuten erreicht.",
         "data": {
           "person_entity": "Person",
-          "work_signal": "Arbeitssignal",
-          "office_zone": "Bürozone (optional)",
-          "minimum_hours": "Mindestarbeitszeit (Stunden)"
+          "work_signal": "Homeoffice-Sensor",
+          "office_zone": "Arbeitszone (optional)"
         }
       }
     },
@@ -22,25 +21,9 @@
         "title": "HA Work-Log Einstellungen",
         "data": {
           "person_entity": "Person",
-          "work_signal": "Arbeitssignal",
-          "office_zone": "Bürozone (optional)",
-          "minimum_hours": "Mindestarbeitszeit (Stunden)"
+          "work_signal": "Homeoffice-Sensor",
+          "office_zone": "Arbeitszone (optional)"
         }
-      }
-    }
-  },
-  "entity": {
-    "calendar": {
-      "worklog": {
-        "name": "Arbeitskalender"
-      }
-    },
-    "sensor": {
-      "work_duration": {
-        "name": "Arbeitszeit heute"
-      },
-      "day_type": {
-        "name": "Tagestyp"
       }
     }
   }

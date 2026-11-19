@@ -5,16 +5,11 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import selector
 
-from .const import (
-    CONF_MINIMUM_HOURS,
-    CONF_OFFICE_ZONE,
-    CONF_PERSON,
-    CONF_WORK_SIGNAL,
-    DEFAULT_MINIMUM_HOURS,
-    DOMAIN,
-)
+from .const import CONF_OFFICE_ZONE, CONF_PERSON, CONF_WORK_SIGNAL, DOMAIN
+
 
 def _schema(defaults: dict | None = None) -> vol.Schema:
+    """Create the setup and options form."""
     defaults = defaults or {}
     fields = {}
     for key, domain in ((CONF_PERSON, "person"), (CONF_WORK_SIGNAL, "binary_sensor")):
@@ -22,16 +17,12 @@ def _schema(defaults: dict | None = None) -> vol.Schema:
         fields[vol.Required(key, default=defaults[key]) if key in defaults else vol.Required(key)] = field
 
     zone_field = selector.EntitySelector(selector.EntitySelectorConfig(domain="zone"))
-    fields[vol.Optional(CONF_OFFICE_ZONE, default=defaults[CONF_OFFICE_ZONE]) if defaults.get(CONF_OFFICE_ZONE) else vol.Optional(CONF_OFFICE_ZONE)] = zone_field
-
-    min_hours = defaults.get(CONF_MINIMUM_HOURS, DEFAULT_MINIMUM_HOURS)
-    fields[vol.Required(CONF_MINIMUM_HOURS, default=min_hours)] = selector.NumberSelector(
-        selector.NumberSelectorConfig(
-            min=0.5, max=12, step=0.5, unit_of_measurement="h",
-            mode=selector.NumberSelectorMode.BOX
-        )
-    )
+    if defaults.get(CONF_OFFICE_ZONE):
+        fields[vol.Optional(CONF_OFFICE_ZONE, default=defaults[CONF_OFFICE_ZONE])] = zone_field
+    else:
+        fields[vol.Optional(CONF_OFFICE_ZONE)] = zone_field
     return vol.Schema(fields)
+
 
 class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Set up one work log."""
@@ -39,6 +30,7 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input: dict | None = None):
+        """Set up the integration."""
         if user_input is not None:
             await self.async_set_unique_id(user_input[CONF_PERSON])
             self._abort_if_unique_id_configured()
@@ -47,12 +39,15 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def async_get_options_flow(config_entry):
+        """Return the options flow."""
         return WorklogOptionsFlow()
 
+
 class WorklogOptionsFlow(config_entries.OptionsFlow):
-    """Allow changing tracking options after setup."""
+    """Allow changing the person and tracking sensors after setup."""
 
     async def async_step_init(self, user_input: dict | None = None):
+        """Update the integration configuration."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
         current = {**self.config_entry.data, **self.config_entry.options}

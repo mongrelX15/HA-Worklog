@@ -8,22 +8,25 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import WorklogCoordinator
+from .coordinator import DAY_TYPES, WorklogCoordinator
 
-DAY_TYPES = ["no_work", "tracking", "home_office", "office", "needs_review"]
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Create work log sensors."""
+    """Create work-log sensors."""
     coordinator: WorklogCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([WorklogDurationSensor(coordinator, entry), WorklogDaySensor(coordinator, entry)])
+    async_add_entities([
+        WorklogDurationSensor(coordinator, entry),
+        WorklogDaySensor(coordinator, entry),
+    ])
+
 
 class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
-    """Accumulated work signal duration for today."""
+    """Internal diagnostic duration; the dashboard does not use this sensor."""
 
     _attr_has_entity_name = True
-    _attr_name = "Arbeitszeit heute"
+    _attr_name = "Erkennungszeit heute"
     _attr_native_unit_of_measurement = "h"
     _attr_native_state_class = SensorStateClass.MEASUREMENT
     _attr_suggested_display_precision = 2
@@ -47,14 +50,14 @@ class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity)
         data = self.coordinator.data
         return {
             "datum": data["date"],
-            "arbeitszeit_sekunden": data["seconds"],
-            "arbeitsort": data["location"],
-            "arbeitszeit_erkannt": data["active"],
-            "mindestarbeitszeit_stunden": data["minimum_hours"],
+            "arbeitszone_sekunden": data["office_seconds"],
+            "homeoffice_sensor_sekunden": data["homeoffice_seconds"],
+            "schwellwert_minuten": data["threshold_minutes"],
         }
 
+
 class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
-    """Explainable classification of today's work day."""
+    """Expose the automatically detected kind of work day."""
 
     _attr_has_entity_name = True
     _attr_name = "Tagestyp"
@@ -81,8 +84,9 @@ class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
         data = self.coordinator.data
         return {
             "datum": data["date"],
-            "mindestarbeitszeit_stunden": data["minimum_hours"],
-            "arbeitszeit_stunden": data["hours"],
-            "arbeitsort": data["location"],
-            "hinweis": "Kurzzeitige Sensorunterbrechungen und Home-Assistant-Ausfälle können Messlücken verursachen.",
+            "schwellwert_minuten": data["threshold_minutes"],
+            "arbeitszone_erreichbar": data["office_source_valid"],
+            "homeoffice_sensor_erreichbar": data["homeoffice_source_valid"],
+            "arbeitszone_aktiv": data["office_active"],
+            "homeoffice_sensor_aktiv": data["homeoffice_active"],
         }

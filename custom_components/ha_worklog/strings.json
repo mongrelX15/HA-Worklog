@@ -3,12 +3,11 @@
     "step": {
       "user": {
         "title": "HA Work-Log einrichten",
-        "description": "Wähle deine Person, ein Arbeitssignal und die Bürozone. Als Arbeitssignal eignet sich ein zuverlässiger Binary-Sensor, der während der Arbeit aktiv ist.",
+        "description": "Wähle deine Person, den Homeoffice-Sensor und optional die Arbeitszone. Ein Tag zählt in der Beta, wenn mindestens eines der beiden Signale 30 Minuten erreicht.",
         "data": {
           "person_entity": "Person",
-          "work_signal": "Arbeitssignal",
-          "office_zone": "Bürozone",
-          "minimum_hours": "Mindestarbeitszeit (Stunden)"
+          "work_signal": "Homeoffice-Sensor",
+          "office_zone": "Arbeitszone (optional)"
         }
       }
     },
@@ -22,9 +21,8 @@
         "title": "HA Work-Log Einstellungen",
         "data": {
           "person_entity": "Person",
-          "work_signal": "Arbeitssignal",
-          "office_zone": "Bürozone",
-          "minimum_hours": "Mindestarbeitszeit (Stunden)"
+          "work_signal": "Homeoffice-Sensor",
+          "office_zone": "Arbeitszone (optional)"
         }
       }
     }

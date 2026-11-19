@@ -3,7 +3,7 @@
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Integration-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
 [![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-1-0)
 
-**HA Work-Log** erfasst Arbeitszeit-Signale und ordnet einen Tag erst nach einer konfigurierbaren Mindestdauer als Homeoffice- oder Bürotag ein. Unklare Standorte werden ausdrücklich als prüfbedürftig markiert.
+**HA Work-Log** erkennt steuerlich relevante Arbeitstage aus einer Arbeitszone und einem Homeoffice-Sensor. Die Erkennungsdauer dient nur als Schwellwert; sie wird nicht im Arbeitskalender angezeigt.
 
 ## Beta 0.1.0
 
@@ -11,44 +11,31 @@ Die Home-Assistant-Custom-Integration wird über **Einstellungen → Geräte & D
 
 Bei der Einrichtung werden gewählt:
 
-- eine Person-Entität (z. B. `person.marcel`)
-- ein Binary-Sensor, der während der Arbeit aktiv ist (z. B. ein Ping-Sensor)
-- optional die Bürozone
-- Mindestarbeitszeit in Stunden (Standard: 2)
+- eine Person-Entität
+- ein Binary-Sensor für das Homeoffice
+- optional eine Arbeitszone für Bürotage
 
-Die Integration erstellt die Sensoren **Arbeitszeit heute** und **Tagestyp** sowie den **Arbeitskalender**. Die Arbeitszeit zählt, solange Arbeitssignal und konfigurierte Personenzone gleichzeitig aktiv sind. Ein Bürotag wird erkannt, wenn die Person in der ausgewählten Bürozone ist; Zuhause wird als Homeoffice gewertet. Andere oder fehlende Standorte ergeben einen prüfbedürftigen Tag.
+Ein Tag zählt in dieser Beta, sobald der Homeoffice-Sensor oder die Arbeitszone mindestens 30 Minuten aktiv war. Wenn beide Signale die Schwelle erreichen, zählt es weiterhin als ein Kalendertag; der Eintrag kennzeichnet beide Signale. Homeoffice- und Arbeitszonenzeiten werden getrennt intern ausgewertet. Die Dauer wird nicht in der Kalenderübersicht angezeigt.
 
-### Tageshistorie und Kalender
+Die Integration stellt einen **Arbeitskalender** und den Sensor **Tagestyp** bereit. Der Kalender speichert die Tagesergebnisse lokal in Home Assistant und zeigt sie als ganztägige Einträge. Die Historie beginnt mit dieser Beta und bleibt nach einem Neustart erhalten. Bereits vergangene Tage vor dem Update können nicht rekonstruiert werden.
 
-Der Arbeitskalender zeigt pro erfasstem Datum einen ganztägigen Eintrag mit Tagesart und Arbeitszeit. Er kann in Home Assistant über eine Kalenderkarte oder die Kalenderansicht angezeigt werden. Frühere Tage ab Installation dieser Beta bleiben lokal gespeichert und sind nach einem Neustart weiter verfügbar. Bereits vergangene Tage aus der Zeit vor diesem Update können nicht nachträglich rekonstruiert werden. Tage, an denen Home Assistant vollständig ausgeschaltet war, werden nicht als Arbeitszeit geschätzt.
+### Dashboard
 
-Tageswerte werden lokal in Home Assistant gespeichert und beim Neustart wiederhergestellt. Bei Tageswechsel beginnt die Zählung neu. Diese Beta verwendet Zustandswechsel und eine Minutenaktualisierung; kurze Ausfälle können daher Messlücken verursachen. Das Ergebnis ist eine Orientierung und ersetzt keine verlässliche Zeiterfassung.
+In Home Assistant gibt es ein separates Dashboard **HA Work-Log** mit den Reitern **Kalender**, **Konfigurator** und **Export**. Die Ansichten verwenden HA-Standardelemente und folgen daher dem aktiven Theme und Dark Mode.
+
+Der Kalender zeigt die automatische Tageserkennung. Manuelle Korrektur, farbliche Tageskategorien und die vollständigen Konfigurator-Eingaben werden schrittweise ergänzt. Der Export-Reiter ist derzeit nur vorbereitet und enthält noch keine Exportfunktion.
 
 ### Installation zum Testen
 
-1. Installiere oder aktualisiere HA Work-Log aus dem Beta-Zweig.
-2. Starte Home Assistant neu, falls es dazu auffordert.
-3. Öffne **Einstellungen → Geräte & Dienste → HA Work-Log**. Dort sollte die Entität **Arbeitskalender** erscheinen.
-4. Füge im Dashboard eine Kalenderkarte hinzu und wähle diese Kalender-Entität aus.
-
-Wenn die Entität nach dem Update fehlt, lade die Integration neu oder starte Home Assistant neu. Frühere Tage werden erst ab dem Update aufgezeichnet.
+1. Aktualisiere HA Work-Log über HACS auf die Beta-Version.
+2. Starte Home Assistant neu oder lade die Integration neu.
+3. Öffne das Dashboard **HA Work-Log** in der Seitenleiste.
+4. Prüfe, ob der Arbeitskalender Tagesergebnisse ohne Stundenangabe zeigt.
 
 Entfernen: Integration in Home Assistant löschen, danach den Ordner `custom_components/ha_worklog` entfernen und HA neu starten.
 
-## Bekannte Grenzen dieser Beta
-
-- Es gibt noch keine manuelle Tageskorrektur, Monats-/Jahresauswertung oder Exportfunktion.
-- Die Messung kann höchstens die Qualität des konfigurierten Arbeitssignals erreichen; ein Ping-Sensor beweist keine tatsächliche Arbeitszeit.
-- Ein Test in einer separaten HA-Testinstanz wird empfohlen.
-
 ## Projekt und Entwicklungsgrundsätze
 
-HA Work-Log wird mit KI-Unterstützung entwickelt (Vibecoding). Anforderungen, fachliche Entscheidungen und Release-Freigaben liegen beim Projektverantwortlichen. KI unterstützt bei Planung, Architektur, Implementierung, Dokumentation und Tests.
+HA Work-Log wird mit KI-Unterstützung entwickelt (Vibecoding). Anforderungen und fachliche Entscheidungen kommen vom Projektverantwortlichen. Änderungen werden in Git zunächst im `beta`-Zweig erprobt; geprüfte Änderungen werden später als stabile Version in `main` veröffentlicht.
 
-Änderungen werden in Git versioniert und nachvollziehbar veröffentlicht. Der vorgesehene Ablauf ist, neue Änderungen zuerst im `beta`-Zweig zu erproben und geprüfte Änderungen anschließend in `main` als stabile Releases zu veröffentlichen.
-
-Die GitHub-Actions-Pipeline prüft Python-Syntax und die vorhandenen Unit-Tests. Vor einer stabilen Freigabe sollen Änderungen zusätzlich vom Maintainer geprüft und in Home Assistant erprobt werden. Beta-Versionen können unvollständig sein oder Fehler enthalten.
-
-## Entwicklung
-
-Entwicklungszweig: `beta`. Stable liegt in `main` und wird durch diese Version nicht verändert. Die GitHub-Actions-Pipeline prüft Syntax und Unit-Tests.
+Beta-Versionen können unvollständig sein oder Fehler enthalten. Ein Test in einer separaten HA-Testinstanz wird empfohlen.

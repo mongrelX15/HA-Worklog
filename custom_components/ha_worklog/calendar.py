@@ -1,4 +1,4 @@
-"""Read-only daily history calendar for HA Work-Log."""
+"""Read-only daily work-day history calendar."""
 from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta
@@ -16,15 +16,11 @@ from .coordinator import WorklogCoordinator
 
 DAY_LABELS = {
     "no_work": "Kein Arbeitstag",
-    "tracking": "Arbeit erfasst",
-    "home_office": "Homeoffice",
-    "office": "Büro",
-    "needs_review": "Prüfung erforderlich",
-}
-LOCATION_LABELS = {
-    "home": "Homeoffice",
-    "office": "Büro",
-    "other": "anderer Ort",
+    "tracking": "Erkennung läuft",
+    "home_office": "Homeoffice-Tag",
+    "office": "Bürotag",
+    "office_and_home_office": "Büro- und Homeoffice-Signale",
+    "needs_review": "Bitte prüfen",
 }
 
 
@@ -37,11 +33,11 @@ async def async_setup_entry(
 
 
 class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
-    """Expose one all-day event per recorded date."""
+    """Expose one all-day event for every tracked date."""
 
     _attr_has_entity_name = True
     _attr_name = "Arbeitskalender"
-    _attr_icon = "mdi:calendar-clock"
+    _attr_icon = "mdi:calendar-month"
 
     def __init__(self, coordinator: WorklogCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
@@ -55,7 +51,7 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
 
     @property
     def event(self) -> CalendarEvent | None:
-        """Return today's all-day event for the calendar state."""
+        """Return today's all-day calendar event."""
         today = dt_util.now().date()
         record = self._record_for_day(today)
         if record is None:
@@ -63,34 +59,21 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
         return self._event_for_day(today, record)
 
     def _record_for_day(self, day: date) -> dict[str, Any] | None:
-        """Return live data for today and the stored record for older days."""
+        """Return live data for today and stored data for previous days."""
         if day.isoformat() == self.coordinator.data["date"]:
-            return {
-                "seconds": self.coordinator.data["seconds"],
-                "hours": self.coordinator.data["hours"],
-                "location": self.coordinator.data["location"],
-                "day_type": self.coordinator.data["day_type"],
-            }
+            return {"day_type": self.coordinator.data["day_type"]}
         return self.coordinator._history.get(day.isoformat())
 
     @staticmethod
     def _event_for_day(day: date, record: dict[str, Any]) -> CalendarEvent:
-        """Create a localized all-day calendar event."""
+        """Create a calendar event without displaying measured time."""
         day_type = record.get("day_type", "needs_review")
-        label = DAY_LABELS.get(day_type, DAY_LABELS["needs_review"])
-        hours = float(record.get("hours", 0))
-        hours_text = f"{hours:.2f}".rstrip("0").rstrip(".").replace(".", ",")
-        summary = f"{label} · {hours_text} h"
-        location = LOCATION_LABELS.get(record.get("location"), "nicht erkannt")
-        description = (
-            f"Erfasste Arbeitszeit: {hours_text} Stunden. "
-            f"Arbeitsort: {location}."
-        )
+        summary = DAY_LABELS.get(day_type, DAY_LABELS["needs_review"])
         return CalendarEvent(
             start=day,
             end=day + timedelta(days=1),
             summary=summary,
-            description=description,
+            description=f"Automatische Tageserkennung: {summary}.",
         )
 
     async def async_get_events(
@@ -99,7 +82,7 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
         start_date: datetime,
         end_date: datetime,
     ) -> list[CalendarEvent]:
-        """Return saved daily events overlapping the requested date range."""
+        """Return history events overlapping the requested range."""
         records = dict(self.coordinator._history)
         today = dt_util.now().date()
         current = self._record_for_day(today)
