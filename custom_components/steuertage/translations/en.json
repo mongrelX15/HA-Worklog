@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Set up Steuertage",
-        "description": "Choose a person, its work location and the automatic-detection threshold. Homeoffice and an external work calendar are optional; their settings appear in the following step only when enabled. The default calendar follows the Home Assistant user linked to the selected Person in Home Assistant.",
+        "description": "Choose a person, work location and threshold. The switches do not reveal extra fields on this same screen: after submitting this step, Home Assistant opens a separate input step for each enabled feature. Homeoffice detection and a work calendar are optional. The default view follows the signed-in Home Assistant user.",
         "data": {
           "person_entity": "Person",
           "homeoffice_enabled": "Homeoffice detection (yes/no)",
@@ -14,7 +14,7 @@
       },
       "homeoffice": {
         "title": "Homeoffice detection",
-        "description": "Select the home zone and the device tracker used for Homeoffice detection.",
+        "description": "This separate input step appears when Homeoffice detection was enabled on the previous step. Choose your home zone and the device from Home Assistant's device list.",
         "data": {
           "home_zone": "Home zone for Homeoffice",
           "homeoffice_device": "Homeoffice device (device_tracker)",
@@ -23,7 +23,7 @@
       },
       "work_calendar": {
         "title": "Work calendar",
-        "description": "Choose the Home Assistant calendar that contains work appointments. Timed and all-day entries are supported.",
+        "description": "This separate input step appears when the work calendar was enabled on the previous step. Choose a calendar integrated with Home Assistant. Timed and all-day events are supported.",
         "data": {
           "work_calendar": "Work calendar"
         }
