@@ -3,14 +3,14 @@
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Integration-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
 [![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-2-0-beta-4-kalender-export-und-wiederherstellung)
 
-**Steuertage** erfasst Tage mit Arbeit vor Ort und Homeoffice für die Steuererklärung. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
+**Steuertage** erfasst Tage mit Arbeitsstätte und Homeoffice für die Steuererklärung. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
 
 ## Beta 0.2.0-beta.7 – Theme und überarbeitete Ansichten
 
 Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → Steuertage** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
 
 - **Person**: Home-Assistant-Person
-- **Arbeitszone (Standort der Arbeit)**: verpflichtend; in dieser Zone wird ein Arbeitstag vor Ort erkannt
+- **Arbeitsstätte (Zone)**: verpflichtend; gemeint ist der Ort, zu dem du für deine Arbeit fährst und dessen Besuche für Wegstrecken-Angaben relevant sein können. Die Zone dient der Anwesenheitserkennung.
 - **Schwellwert**: frei einstellbar in Stunden (0,5-Stunden-Schritte), Standardwert 2 Stunden
 - **Optionale Funktionen**: Nach den Pflichtangaben öffnet sich eine Auswahl. Dort kannst du Homeoffice-Erkennung und Arbeitskalender jeweils einzeln einrichten oder überspringen. Homeoffice fragt erst in seinem eigenen Schritt nach Home-Zone und `device_tracker`; der Arbeitskalender wird ebenfalls nur abgefragt, wenn du ihn auswählst.
 - **Standardkalender**: wird automatisch anhand des angemeldeten Benutzers und der Benutzerzuordnung in der jeweiligen Home-Assistant-Person ausgewählt
