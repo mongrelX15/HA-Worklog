@@ -3,11 +3,16 @@
     "step": {
       "user": {
         "title": "Steuertage einrichten",
-        "description": "Lege zuerst Person, Arbeitsstätte und Schwellwert fest. Mit Arbeitsstätte ist der Ort gemeint, zu dem du für deine Arbeit fährst und dessen Besuche für Wegstrecken-Angaben relevant sein können. Auf der nächsten Seite findest du weitere Einstellungen für optionale Funktionen, die du einrichten oder überspringen kannst.",
+        "description": "Richte hier alles in einem Dialog ein. Die Arbeitsstätte ist der Ort, zu dem du für deine Arbeit fährst. Der Schwellwert bestimmt, wie lange du in der Arbeitszone oder – bei aktivierter Homeoffice-Erkennung – in der Home-Zone sein musst, damit ein Tag automatisch zählt (Standard: 2 Stunden). Homeoffice-Erkennung und Arbeitskalender sind optional; die zugehörigen Eingaben sind nur nötig, wenn du die jeweilige Funktion aktivierst.",
         "data": {
           "person_entity": "Person",
           "office_zone": "Arbeitsstätte (Zone)",
-          "threshold_hours": "Mindestdauer pro Signal (Stunden; Standard 2)"
+          "threshold_hours": "Mindestanwesenheit bis ein Tag zählt (Stunden; Standard 2)",
+          "homeoffice_enabled": "Homeoffice-Erkennung verwenden",
+          "home_zone": "Home-Zone (optional; erforderlich bei aktivierter Homeoffice-Erkennung)",
+          "homeoffice_device": "Homeoffice-Gerät (optional; erforderlich bei aktivierter Homeoffice-Erkennung)",
+          "work_calendar_enabled": "Arbeitskalender verwenden",
+          "work_calendar": "Arbeitskalender (optional; erforderlich bei Aktivierung)"
         }
       },
       "features": {
@@ -68,10 +73,15 @@
     "step": {
       "init": {
         "title": "Steuertage-Einstellungen",
-        "description": "Passe Person, Arbeitsstätte und Schwellwert an. Mit Arbeitsstätte ist der Ort gemeint, zu dem du für deine Arbeit fährst und dessen Besuche für Wegstrecken-Angaben relevant sein können. Danach kannst du optionale Funktionen einrichten, ändern oder deaktivieren.",
+        "description": "Passe hier alles in einem Dialog an. Die Arbeitsstätte ist der Ort, zu dem du für deine Arbeit fährst. Der Schwellwert bestimmt, wie lange du in der Arbeitszone oder – bei aktivierter Homeoffice-Erkennung – in der Home-Zone sein musst, damit ein Tag automatisch zählt (Standard: 2 Stunden). Homeoffice-Erkennung und Arbeitskalender sind optional; die zugehörigen Eingaben sind nur nötig, wenn du die jeweilige Funktion aktivierst.",
         "data": {
           "office_zone": "Arbeitsstätte (Zone)",
-          "threshold_hours": "Mindestdauer pro Signal (Stunden; Standard 2)"
+          "threshold_hours": "Mindestanwesenheit bis ein Tag zählt (Stunden; Standard 2)",
+          "homeoffice_enabled": "Homeoffice-Erkennung verwenden",
+          "home_zone": "Home-Zone (optional; erforderlich bei aktivierter Homeoffice-Erkennung)",
+          "homeoffice_device": "Homeoffice-Gerät (optional; erforderlich bei aktivierter Homeoffice-Erkennung)",
+          "work_calendar_enabled": "Arbeitskalender verwenden",
+          "work_calendar": "Arbeitskalender (optional; erforderlich bei Aktivierung)"
         }
       },
       "manage": {
