@@ -1,6 +1,7 @@
 """Read-only daily work-day history calendar."""
 from __future__ import annotations
 
+import json
 from datetime import date, datetime, time, timedelta
 from typing import Any
 
@@ -29,7 +30,7 @@ DAY_LABELS = {
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Create the daily history calendar."""
+    """Create one daily history calendar per person."""
     coordinator: WorklogCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([WorklogCalendar(coordinator, entry)])
 
@@ -46,9 +47,19 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
         self._attr_unique_id = f"{entry.entry_id}_work_calendar"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "HA Work-Log",
+            "name": f"HA Work-Log – {coordinator.person_name}",
             "manufacturer": "HA Work-Log",
             "model": "Beta",
+        }
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose the panel's calendar-to-person mapping."""
+        return {
+            "worklog_person_entity": self.coordinator.person_entity,
+            "worklog_person_name": self.coordinator.person_name,
+            "worklog_user_id": self.coordinator.ha_user_id,
+            "worklog_entry_id": self.coordinator.entry_id,
         }
 
     @property
@@ -68,7 +79,7 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
 
     @staticmethod
     def _event_for_day(day: date, record: dict[str, Any]) -> CalendarEvent:
-        """Create a calendar event without displaying measured time."""
+        """Create an all-day event including the full manual-change history."""
         day_type = record.get("day_type", "needs_review")
         summary = DAY_LABELS.get(day_type, DAY_LABELS["needs_review"])
         automatic = record.get("automatic_day_type", day_type)
@@ -77,6 +88,11 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
         description = f"Automatische Tageserkennung: {automatic_summary}."
         if manual_override:
             description += f" Manuell geändert zu: {summary}."
+        change_history = record.get("change_history", [])
+        if change_history:
+            description += "\nHA_WORKLOG_HISTORY:" + json.dumps(
+                change_history, ensure_ascii=False, separators=(",", ":")
+            )
         return CalendarEvent(
             start=day,
             end=day + timedelta(days=1),
@@ -104,7 +120,9 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
             except ValueError:
                 continue
             local_start = datetime.combine(day, time.min, tzinfo=start_date.tzinfo)
-            local_end = datetime.combine(day + timedelta(days=1), time.min, tzinfo=start_date.tzinfo)
+            local_end = datetime.combine(
+                day + timedelta(days=1), time.min, tzinfo=start_date.tzinfo
+            )
             if local_end > start_date and local_start < end_date:
                 events.append(self._event_for_day(day, record))
         return sorted(events, key=lambda item: item.start)
