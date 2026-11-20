@@ -813,8 +813,12 @@ class SteuertagePanel extends HTMLElement {
           return "<li><time>" + this._escape(displayTime) + "</time> · " + who + ": " + from + " → " + to + "</li>";
         }).join("") + "</ul></details>"
       : "";
-    const selectionTitle = this._selectionMode === "multiple"
-      ? selectedDateCount + (selectedDateCount === 1 ? " Tag ausgewählt" : " Tage ausgewählt")
+    const orderedSelectedDates = [...selectedDates].sort();
+    const numericDate = (date) => this._formatDate(date, {
+      day: "2-digit", month: "2-digit", year: "numeric",
+    });
+    const selectionTitle = selectedDateCount > 1
+      ? numericDate(orderedSelectedDates[0]) + " bis " + numericDate(orderedSelectedDates.at(-1))
       : this._formatDate(this._selected);
     const selectionSubhead = this._selectionMode === "multiple"
       ? "Der gewählte Tagestyp wird auf alle markierten Tage angewendet."
