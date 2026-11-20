@@ -1,5 +1,10 @@
 # Änderungsprotokoll
 
+## Noch nicht veröffentlicht
+
+- Datenmigration: ältere Krankheits- und Urlaubseinträge werden als manuelle Änderungen behandelt. Beim Zurücksetzen auf automatisch kann die automatische Erkennung diese Abwesenheitstypen nicht mehr übernehmen; ohne Signal wird stattdessen der passende automatische Status angezeigt.
+
+
 ## 0.2.0-beta.14
 
 - Tastenkürzel: A setzt Arbeitsstätte, H Homeoffice (falls aktiviert), U Urlaub, K Krankheit, E automatische Erkennung und 0 manuell „Kein Arbeitstag“.
