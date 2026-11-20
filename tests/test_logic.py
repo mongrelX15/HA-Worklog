@@ -112,3 +112,62 @@ def test_legacy_record_migration_preserves_manual_history():
     assert migrated["homeoffice_seconds"] == 1800
     assert migrated["day_type"] == "vacation"
     assert migrated["change_history"] == audit
+
+
+def test_multiuser_conflicts_reject_reuse_but_allow_shared_zones():
+    existing = [
+        {
+            "entry_id": "entry-a",
+            "values": {
+                "person_entity": "person.marcel",
+                "homeoffice_device": "device_tracker.phone",
+                "ha_user_id": "user-marcel",
+                "home_zone": "zone.home",
+            },
+        }
+    ]
+    conflicts = logic.find_person_configuration_conflicts(
+        {
+            "person_entity": "person.marcel",
+            "homeoffice_device": "device_tracker.phone",
+            "ha_user_id": "user-marcel",
+            "home_zone": "zone.home",
+        },
+        existing,
+    )
+    assert conflicts == {
+        "already_configured",
+        "device_already_configured",
+        "user_already_configured",
+    }
+    assert logic.find_person_configuration_conflicts(
+        {
+            "person_entity": "person.fiona",
+            "homeoffice_device": "device_tracker.fiona_phone",
+            "ha_user_id": "user-fiona",
+            "home_zone": "zone.home",
+        },
+        existing,
+    ) == set()
+
+
+def test_options_flow_excludes_its_own_entry_from_conflict_checks():
+    existing = [
+        {
+            "entry_id": "entry-a",
+            "values": {
+                "person_entity": "person.marcel",
+                "homeoffice_device": "device_tracker.phone",
+                "ha_user_id": "user-marcel",
+            },
+        }
+    ]
+    assert logic.find_person_configuration_conflicts(
+        {
+            "person_entity": "person.marcel",
+            "homeoffice_device": "device_tracker.phone",
+            "ha_user_id": "user-marcel",
+        },
+        existing,
+        exclude_entry_id="entry-a",
+    ) == set()
