@@ -256,7 +256,10 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         home_zone = self.hass.states.get(self.home_zone_entity)
         person_valid = person is not None and person.state not in ("unknown", "unavailable")
         self._person_status = person.state if person else "unavailable"
-        self._person_source_valid = bool(person_valid and home_zone is not None)
+        home_zone_valid = bool(
+            home_zone is not None and home_zone.state not in ("unknown", "unavailable")
+        )
+        self._person_source_valid = bool(person_valid and home_zone_valid)
 
         office_zone = (
             self.hass.states.get(self.office_zone_entity)
@@ -296,7 +299,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             person_home = self._is_in_zone(person, self.home_zone_entity)
             device_home = self._is_in_zone(device, self.home_zone_entity)
             self._homeoffice_source_valid = bool(
-                person_valid and home_zone is not None and device_valid
+                person_valid and home_zone_valid and device_valid
             )
             homeoffice_active = bool(
                 self._homeoffice_source_valid and person_home and device_home
