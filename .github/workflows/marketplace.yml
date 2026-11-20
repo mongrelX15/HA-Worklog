@@ -1,0 +1,42 @@
+name: Marketplace readiness
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+  pull_request:
+    branches:
+      - main
+      - beta
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hassfest:
+    name: Home Assistant integration validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate integration
+        uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS repository validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate HACS integration
+        uses: hacs/action@main
+        with:
+          category: integration
+          # Temporary until the project owner selects and adds a license.
+          ignore: license
+      - name: Report remaining catalog requirement
+        run: |
+          echo "::warning::HACS license validation is temporarily ignored. Default catalog submission is not ready until a valid open-source license is selected and the ignore is removed."
+          echo "Remaining blocker: select and add an OSI-approved license, then remove the license ignore and confirm all checks pass." >> "$GITHUB_STEP_SUMMARY"
