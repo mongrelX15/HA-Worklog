@@ -50,7 +50,10 @@ def _schema(
     )
 
     if include_legacy_signal:
-        fields[vol.Optional(CONF_WORK_SIGNAL)] = selector.EntitySelector(
+        fields[vol.Optional(
+            CONF_WORK_SIGNAL,
+            default=defaults.get(CONF_WORK_SIGNAL),
+        )] = selector.EntitySelector(
             selector.EntitySelectorConfig(domain="binary_sensor")
         )
 
