@@ -1,7 +1,9 @@
 """Coordinator that recognizes qualifying work days and stores per-person history."""
 from __future__ import annotations
 
+import copy
 import logging
+import math
 import re
 from datetime import date, datetime
 from typing import Any
@@ -140,6 +142,53 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "homeoffice_seconds": round(self._homeoffice_seconds),
             "change_history": list(previous.get("change_history", [])),
         }
+
+    def export_history(self) -> dict[str, dict[str, Any]]:
+        """Return a detached copy of all saved day records, including today."""
+        records = {
+            day: copy.deepcopy(record)
+            for day, record in self._history.items()
+            if isinstance(day, str) and isinstance(record, dict)
+        }
+        records[self._date] = copy.deepcopy(self._history_record())
+        return records
+
+    async def async_restore_history(
+        self, records: dict[str, Any]
+    ) -> dict[str, int]:
+        """Merge valid backup records without overwriting any saved day."""
+        if not isinstance(records, dict):
+            raise ValueError("Die Sicherungsdatei enthält keine Tagesliste.")
+
+        imported = skipped = invalid = 0
+        for day_string, record in records.items():
+            try:
+                parsed = date.fromisoformat(day_string)
+                if parsed.isoformat() != day_string or not isinstance(record, dict):
+                    raise ValueError("Ungültiger Datensatz.")
+                for field in ("office_seconds", "homeoffice_seconds", "seconds"):
+                    if field in record:
+                        seconds = float(record[field])
+                        if not math.isfinite(seconds) or seconds < 0:
+                            raise ValueError("Ungültige Zeitangabe.")
+                if day_string in self._history:
+                    skipped += 1
+                    continue
+                self._history[day_string] = self._normalize_record(record)
+                imported += 1
+            except (TypeError, ValueError, OverflowError):
+                invalid += 1
+
+        if imported:
+            if self._date in self._history:
+                restored_today = self._history[self._date]
+                self._office_seconds = float(restored_today.get("office_seconds", 0))
+                self._homeoffice_seconds = float(restored_today.get("homeoffice_seconds", 0))
+                self.data = self._snapshot()
+                self._history[self._date] = self._history_record()
+            await self._async_save()
+            self.async_set_updated_data(self._snapshot())
+        return {"imported": imported, "skipped": skipped, "invalid": invalid}
 
     async def async_set_day_override(
         self,

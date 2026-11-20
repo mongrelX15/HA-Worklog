@@ -3,14 +3,16 @@ from __future__ import annotations
 
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
 
 import voluptuous as vol
-from homeassistant.components import frontend, panel_custom
+from homeassistant.components import frontend, panel_custom, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.exceptions import ServiceValidationError
+from homeassistant.util import dt as dt_util
 from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_interval,
@@ -48,6 +50,91 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
             ]
         )
         panel_data["static_registered"] = True
+
+    if not panel_data.get("backup_commands_registered"):
+        @websocket_api.require_admin
+        @websocket_api.websocket_command(
+            {
+                vol.Required("type"): "steuertage/export_history",
+                vol.Required("person_entity"): str,
+            }
+        )
+        @websocket_api.async_response
+        async def export_history(
+            _hass: HomeAssistant,
+            connection: websocket_api.ActiveConnection,
+            msg: dict[str, Any],
+        ) -> None:
+            """Return a per-person history backup to an administrator."""
+            coordinator = next(
+                (
+                    item
+                    for item in hass.data.get(DOMAIN, {}).values()
+                    if item.person_entity == msg["person_entity"]
+                ),
+                None,
+            )
+            if coordinator is None:
+                connection.send_error(
+                    msg["id"],
+                    websocket_api.ERR_NOT_FOUND,
+                    "Für diese Person ist kein Verlauf eingerichtet.",
+                )
+                return
+            connection.send_result(
+                msg["id"],
+                {
+                    "format": "steuertage_backup",
+                    "version": 1,
+                    "person_entity": coordinator.person_entity,
+                    "person_name": coordinator.person_name,
+                    "created_at": dt_util.now().isoformat(),
+                    "records": coordinator.export_history(),
+                },
+            )
+
+        @websocket_api.require_admin
+        @websocket_api.websocket_command(
+            {
+                vol.Required("type"): "steuertage/restore_history",
+                vol.Required("person_entity"): str,
+                vol.Required("records"): dict,
+            }
+        )
+        @websocket_api.async_response
+        async def restore_history(
+            _hass: HomeAssistant,
+            connection: websocket_api.ActiveConnection,
+            msg: dict[str, Any],
+        ) -> None:
+            """Merge a backup into the selected person's saved history."""
+            coordinator = next(
+                (
+                    item
+                    for item in hass.data.get(DOMAIN, {}).values()
+                    if item.person_entity == msg["person_entity"]
+                ),
+                None,
+            )
+            if coordinator is None:
+                connection.send_error(
+                    msg["id"],
+                    websocket_api.ERR_NOT_FOUND,
+                    "Für diese Person ist kein Verlauf eingerichtet.",
+                )
+                return
+            try:
+                result = await coordinator.async_restore_history(msg["records"])
+            except ValueError as err:
+                connection.send_error(
+                    msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err)
+                )
+                return
+            connection.send_result(msg["id"], result)
+
+        websocket_api.async_register_command(hass, export_history)
+        websocket_api.async_register_command(hass, restore_history)
+        panel_data["backup_commands_registered"] = True
 
     if not frontend.async_panel_exists(hass, PANEL_PATH):
         await panel_custom.async_register_panel(
