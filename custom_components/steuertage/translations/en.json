@@ -3,10 +3,10 @@
     "step": {
       "user": {
         "title": "Set up Steuertage",
-        "description": "First choose the person, required work zone (work location), and minimum duration. Then you can set up optional features one at a time or skip them.",
+        "description": "First choose the person, work location and threshold. The work location means the place you travel to for work, whose visits may be relevant to your commute-distance records. You can then set up optional features one at a time or skip them.",
         "data": {
           "person_entity": "Person",
-          "office_zone": "Work zone (work location)",
+          "office_zone": "Work location (zone)",
           "threshold_hours": "Minimum duration per signal (hours; default 2)"
         }
       },
@@ -58,9 +58,9 @@
     "step": {
       "init": {
         "title": "Steuertage settings",
-        "description": "Adjust the person, required work zone and minimum duration. Afterwards, configure, change or disable optional features.",
+        "description": "Adjust the person, work location and threshold. The work location means the place you travel to for work, whose visits may be relevant to your commute-distance records. Afterwards, configure, change or disable optional features.",
         "data": {
-          "office_zone": "Work zone (work location)",
+          "office_zone": "Work location (zone)",
           "threshold_hours": "Minimum duration per signal (hours; default 2)"
         }
       },
