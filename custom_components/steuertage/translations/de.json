@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Steuertage einrichten",
-        "description": "Lege zuerst Person, Arbeitsstätte und Schwellwert fest. Mit Arbeitsstätte ist der Ort gemeint, zu dem du für deine Arbeit fährst und dessen Besuche für Wegstrecken-Angaben relevant sein können. Danach kannst du optionale Funktionen einzeln einrichten oder überspringen.",
+        "description": "Lege zuerst Person, Arbeitsstätte und Schwellwert fest. Mit Arbeitsstätte ist der Ort gemeint, zu dem du für deine Arbeit fährst und dessen Besuche für Wegstrecken-Angaben relevant sein können. Auf der nächsten Seite findest du weitere Einstellungen für optionale Funktionen, die du einrichten oder überspringen kannst.",
         "data": {
           "person_entity": "Person",
           "office_zone": "Arbeitsstätte (Zone)",
