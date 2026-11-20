@@ -21,7 +21,6 @@ from .const import (
     CONF_WORK_CALENDAR_ENABLED,
     CONF_WORK_SIGNAL,
     DEFAULT_THRESHOLD_HOURS,
-    DEFAULT_THRESHOLD_MINUTES,
     DOMAIN,
 )
 from .logic import find_person_configuration_conflicts
@@ -30,33 +29,17 @@ from .logic import find_person_configuration_conflicts
 def _base_schema(
     defaults: dict[str, Any] | None = None, *, include_person: bool = True
 ) -> vol.Schema:
-    """Build the first setup/options step with feature toggles."""
+    """Build the required person, work zone and threshold form."""
     defaults = defaults or {}
     fields: dict[Any, Any] = {}
     if include_person:
         fields[vol.Required(CONF_PERSON)] = selector.EntitySelector(
             selector.EntitySelectorConfig(domain="person")
         )
-
-    fields[vol.Required(
-        CONF_HOME_OFFICE_ENABLED,
-        default=bool(defaults.get(CONF_HOME_OFFICE_ENABLED, True)),
-    )] = selector.BooleanSelector()
-
     fields[vol.Required(
         CONF_OFFICE_ZONE,
         default=defaults.get(CONF_OFFICE_ZONE) or "",
     )] = selector.EntitySelector(selector.EntitySelectorConfig(domain="zone"))
-
-    calendar_enabled = defaults.get(
-        CONF_WORK_CALENDAR_ENABLED,
-        bool(defaults.get(CONF_WORK_CALENDAR)),
-    )
-    fields[vol.Required(
-        CONF_WORK_CALENDAR_ENABLED,
-        default=bool(calendar_enabled),
-    )] = selector.BooleanSelector()
-
     legacy_minutes = defaults.get(CONF_THRESHOLD_MINUTES)
     default_hours = defaults.get(
         CONF_THRESHOLD_HOURS,
@@ -67,10 +50,7 @@ def _base_schema(
         default=float(default_hours),
     )] = selector.NumberSelector(
         selector.NumberSelectorConfig(
-            min=0.5,
-            max=24,
-            step=0.5,
-            mode=NumberSelectorMode.BOX,
+            min=0.5, max=24, step=0.5, mode=NumberSelectorMode.BOX
         )
     )
     return vol.Schema(fields)
@@ -81,7 +61,7 @@ def _homeoffice_schema(
     *,
     include_legacy_signal: bool = False,
 ) -> vol.Schema:
-    """Build the conditional Homeoffice source step."""
+    """Build the Homeoffice source form shown only when selected."""
     defaults = defaults or {}
     fields: dict[Any, Any] = {
         vol.Required(
@@ -98,22 +78,18 @@ def _homeoffice_schema(
                 CONF_DEVICE_TRACKER,
                 default=defaults.get(CONF_DEVICE_TRACKER) or "",
             )
-        ): selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="device_tracker")
-        ),
+        ): selector.EntitySelector(selector.EntitySelectorConfig(domain="device_tracker")),
     }
     if include_legacy_signal:
         fields[vol.Optional(
             CONF_WORK_SIGNAL,
             default=defaults.get(CONF_WORK_SIGNAL) or "",
-        )] = selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="binary_sensor")
-        )
+        )] = selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
     return vol.Schema(fields)
 
 
 def _work_calendar_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
-    """Build the conditional work-calendar step."""
+    """Build the optional work-calendar form."""
     defaults = defaults or {}
     return vol.Schema({
         vol.Required(
@@ -129,7 +105,7 @@ def _configuration(entry) -> dict[str, Any]:
 
 
 def _normalize_base(values: dict[str, Any]) -> dict[str, Any]:
-    """Normalize the always-visible setup fields and legacy options."""
+    """Normalize the required fields and legacy options."""
     legacy_minutes = values.pop(CONF_THRESHOLD_MINUTES, None)
     if CONF_THRESHOLD_HOURS not in values:
         values[CONF_THRESHOLD_HOURS] = (
@@ -138,21 +114,14 @@ def _normalize_base(values: dict[str, Any]) -> dict[str, Any]:
             else DEFAULT_THRESHOLD_HOURS
         )
     values[CONF_THRESHOLD_HOURS] = max(
-        0.5,
-        min(24.0, round(float(values[CONF_THRESHOLD_HOURS]) * 2) / 2),
+        0.5, min(24.0, round(float(values[CONF_THRESHOLD_HOURS]) * 2) / 2)
     )
-    values[CONF_HOME_OFFICE_ENABLED] = bool(
-        values.get(CONF_HOME_OFFICE_ENABLED, True)
-    )
+    values[CONF_HOME_OFFICE_ENABLED] = bool(values.get(CONF_HOME_OFFICE_ENABLED, False))
     values[CONF_OFFICE_ZONE] = values.get(CONF_OFFICE_ZONE) or None
     values[CONF_WORK_CALENDAR_ENABLED] = bool(
-        values.get(
-            CONF_WORK_CALENDAR_ENABLED,
-            bool(values.get(CONF_WORK_CALENDAR)),
-        )
+        values.get(CONF_WORK_CALENDAR_ENABLED, bool(values.get(CONF_WORK_CALENDAR)))
     )
     # Legacy installations may still contain the old explicit user mapping.
-    # New selection is inferred from the HA user linked to the Person entity.
     values[CONF_HA_USER_ID] = None
     for key in (CONF_DEVICE_TRACKER, CONF_HOME_ZONE, CONF_WORK_SIGNAL, CONF_WORK_CALENDAR):
         values[key] = values.get(key) or None
@@ -160,14 +129,12 @@ def _normalize_base(values: dict[str, Any]) -> dict[str, Any]:
 
 
 def _base_errors(values: dict[str, Any]) -> dict[str, str]:
-    """Validate values required before optional source steps."""
-    if values.get(CONF_OFFICE_ZONE):
-        return {}
-    return {CONF_OFFICE_ZONE: "office_zone_required"}
+    """Require the work zone before offering optional setup."""
+    return {} if values.get(CONF_OFFICE_ZONE) else {CONF_OFFICE_ZONE: "office_zone_required"}
 
 
 def _homeoffice_errors(values: dict[str, Any]) -> dict[str, str]:
-    """Require an enabled Homeoffice source."""
+    """Require a usable Homeoffice source."""
     if not values.get(CONF_HOME_ZONE):
         return {CONF_HOME_ZONE: "home_zone_required"}
     if not (values.get(CONF_DEVICE_TRACKER) or values.get(CONF_WORK_SIGNAL)):
@@ -175,21 +142,14 @@ def _homeoffice_errors(values: dict[str, Any]) -> dict[str, str]:
     return {}
 
 
-def _find_conflicts(
-    hass,
-    values: dict[str, Any],
-    *,
-    exclude_entry_id: str | None = None,
-) -> set[str]:
+def _find_conflicts(hass, values: dict[str, Any], *, exclude_entry_id: str | None = None) -> set[str]:
     """Prevent ambiguous person and tracker assignments."""
     configurations = [
         {"entry_id": entry.entry_id, "values": _configuration(entry)}
         for entry in hass.config_entries.async_entries(DOMAIN)
     ]
     return find_person_configuration_conflicts(
-        values,
-        configurations,
-        exclude_entry_id=exclude_entry_id,
+        values, configurations, exclude_entry_id=exclude_entry_id
     )
 
 
@@ -199,7 +159,7 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
-        """Set up a person and choose which optional steps to show."""
+        """Collect required basics, then offer optional feature steps."""
         errors: dict[str, str] = {}
         if user_input is not None:
             values = _normalize_base(dict(user_input))
@@ -208,93 +168,75 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._person_entity = values[CONF_PERSON]
                 await self.async_set_unique_id(self._person_entity)
                 self._abort_if_unique_id_configured()
-                errors = {
-                    key: key
-                    for key in _find_conflicts(self.hass, values)
-                }
+                errors = {key: key for key in _find_conflicts(self.hass, values)}
             if not errors:
                 self._draft_config = values
-                return await self._next_setup_step()
-
+                return await self.async_step_features()
         return self.async_show_form(
-            step_id="user",
-            data_schema=_base_schema(user_input),
-            errors=errors,
+            step_id="user", data_schema=_base_schema(user_input), errors=errors
+        )
+
+    async def async_step_features(self, user_input: dict[str, Any] | None = None):
+        """Offer optional features explicitly instead of implying inline fields."""
+        return self.async_show_menu(
+            step_id="features",
+            menu_options=["homeoffice", "work_calendar", "finish"],
         )
 
     async def async_step_homeoffice(self, user_input: dict[str, Any] | None = None):
-        """Collect Homeoffice details only when enabled."""
+        """Configure Homeoffice only after the user selects that feature."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            values = {
-                **self._draft_config,
-                **{key: value or None for key, value in user_input.items()},
-            }
+            values = {**self._draft_config, **{k: v or None for k, v in user_input.items()}}
             errors = _homeoffice_errors(values)
             if not errors:
                 self._draft_config.update({
+                    CONF_HOME_OFFICE_ENABLED: True,
                     CONF_HOME_ZONE: values.get(CONF_HOME_ZONE),
                     CONF_DEVICE_TRACKER: values.get(CONF_DEVICE_TRACKER),
                     CONF_WORK_SIGNAL: values.get(CONF_WORK_SIGNAL),
                 })
-                errors = {
-                    key: key
-                    for key in _find_conflicts(self.hass, self._draft_config)
-                }
+                errors = {key: key for key in _find_conflicts(self.hass, self._draft_config)}
             if not errors:
-                return await self._next_calendar_setup_step()
-
+                return await self.async_step_features()
         return self.async_show_form(
             step_id="homeoffice",
             data_schema=_homeoffice_schema(user_input),
             errors=errors,
         )
 
-    async def async_step_work_calendar(
-        self, user_input: dict[str, Any] | None = None
-    ):
-        """Collect a calendar only when enabled."""
+    async def async_step_work_calendar(self, user_input: dict[str, Any] | None = None):
+        """Configure a work calendar only after the user selects that feature."""
         errors: dict[str, str] = {}
         if user_input is not None:
             calendar_entity = user_input.get(CONF_WORK_CALENDAR) or None
             if not calendar_entity:
                 errors[CONF_WORK_CALENDAR] = "work_calendar_required"
             else:
+                self._draft_config[CONF_WORK_CALENDAR_ENABLED] = True
                 self._draft_config[CONF_WORK_CALENDAR] = calendar_entity
-                return self._create_entry()
+                return await self.async_step_features()
         return self.async_show_form(
             step_id="work_calendar",
             data_schema=_work_calendar_schema(user_input),
             errors=errors,
         )
 
-    async def _next_setup_step(self):
-        if self._draft_config.get(CONF_HOME_OFFICE_ENABLED):
-            return await self.async_step_homeoffice()
-        self._clear_homeoffice_sources()
-        return await self._next_calendar_setup_step()
-
-    async def _next_calendar_setup_step(self):
-        if self._draft_config.get(CONF_WORK_CALENDAR_ENABLED):
-            return await self.async_step_work_calendar()
-        self._draft_config[CONF_WORK_CALENDAR] = None
-        return self._create_entry()
-
-    def _clear_homeoffice_sources(self):
-        self._draft_config[CONF_HOME_ZONE] = None
-        self._draft_config[CONF_DEVICE_TRACKER] = None
-        self._draft_config[CONF_WORK_SIGNAL] = None
-
-    def _create_entry(self):
+    async def async_step_finish(self, user_input: dict[str, Any] | None = None):
+        """Finish setup with the selected optional features."""
+        self._draft_config.setdefault(CONF_HOME_OFFICE_ENABLED, False)
+        self._draft_config.setdefault(CONF_WORK_CALENDAR_ENABLED, False)
+        self._draft_config.setdefault(CONF_HOME_ZONE, None)
+        self._draft_config.setdefault(CONF_DEVICE_TRACKER, None)
+        self._draft_config.setdefault(CONF_WORK_SIGNAL, None)
+        self._draft_config.setdefault(CONF_WORK_CALENDAR, None)
         state = self.hass.states.get(self._person_entity)
         title = (
             state.attributes.get("friendly_name", self._person_entity)
-            if state
-            else self._person_entity
+            if state else self._person_entity
         )
         return self.async_create_entry(
-            title=f"Steuertage – {title}",
-            data=self._draft_config,
+            title=f"Steuertage – {title}", data=self._draft_config
         )
 
     @staticmethod
@@ -304,56 +246,57 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class WorklogOptionsFlow(config_entries.OptionsFlow):
-    """Update person, source and threshold settings."""
+    """Update required settings and manage optional feature steps."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
-        """Update always-visible settings and choose conditional steps."""
+        """Update required settings before showing the feature menu."""
         current = _configuration(self.config_entry)
         if user_input is not None:
             values = _normalize_base({**current, **user_input})
             errors = _base_errors(values)
-            if errors:
-                return self.async_show_form(
-                    step_id="init",
-                    data_schema=_base_schema(values, include_person=False),
-                    errors=errors,
-                )
-            self._draft_config = values
-            return await self._next_options_step()
-
+            if not errors:
+                self._draft_config = values
+                return await self.async_step_manage()
+            return self.async_show_form(
+                step_id="init",
+                data_schema=_base_schema(values, include_person=False),
+                errors=errors,
+            )
         return self.async_show_form(
-            step_id="init",
-            data_schema=_base_schema(current, include_person=False),
+            step_id="init", data_schema=_base_schema(current, include_person=False)
         )
 
+    async def async_step_manage(self, user_input: dict[str, Any] | None = None):
+        """Show optional features and explicit disable actions."""
+        options = ["homeoffice", "work_calendar"]
+        if self._draft_config.get(CONF_HOME_OFFICE_ENABLED):
+            options.append("disable_homeoffice")
+        if self._draft_config.get(CONF_WORK_CALENDAR_ENABLED):
+            options.append("disable_work_calendar")
+        options.append("finish")
+        return self.async_show_menu(step_id="manage", menu_options=options)
+
     async def async_step_homeoffice(self, user_input: dict[str, Any] | None = None):
-        """Update Homeoffice sources only when enabled."""
+        """Configure or enable Homeoffice detection."""
         current = _configuration(self.config_entry)
         include_legacy = bool(current.get(CONF_WORK_SIGNAL))
         errors: dict[str, str] = {}
         if user_input is not None:
-            values = {
-                **self._draft_config,
-                **{key: value or None for key, value in user_input.items()},
-            }
+            values = {**self._draft_config, **{k: v or None for k, v in user_input.items()}}
             errors = _homeoffice_errors(values)
             if not errors:
                 self._draft_config.update({
+                    CONF_HOME_OFFICE_ENABLED: True,
                     CONF_HOME_ZONE: values.get(CONF_HOME_ZONE),
                     CONF_DEVICE_TRACKER: values.get(CONF_DEVICE_TRACKER),
                     CONF_WORK_SIGNAL: values.get(CONF_WORK_SIGNAL),
                 })
-                errors = {
-                    key: key
-                    for key in _find_conflicts(
-                        self.hass,
-                        self._draft_config,
-                        exclude_entry_id=self.config_entry.entry_id,
-                    )
-                }
+                errors = {key: key for key in _find_conflicts(
+                    self.hass, self._draft_config,
+                    exclude_entry_id=self.config_entry.entry_id
+                )}
             if not errors:
-                return await self._next_calendar_options_step()
-
+                return await self.async_step_manage()
         return self.async_show_form(
             step_id="homeoffice",
             data_schema=_homeoffice_schema(
@@ -363,18 +306,17 @@ class WorklogOptionsFlow(config_entries.OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_work_calendar(
-        self, user_input: dict[str, Any] | None = None
-    ):
-        """Update the calendar only when enabled."""
+    async def async_step_work_calendar(self, user_input: dict[str, Any] | None = None):
+        """Configure or enable the work calendar."""
         errors: dict[str, str] = {}
         if user_input is not None:
             calendar_entity = user_input.get(CONF_WORK_CALENDAR) or None
             if not calendar_entity:
                 errors[CONF_WORK_CALENDAR] = "work_calendar_required"
             else:
+                self._draft_config[CONF_WORK_CALENDAR_ENABLED] = True
                 self._draft_config[CONF_WORK_CALENDAR] = calendar_entity
-                return self._create_options_entry()
+                return await self.async_step_manage()
         return self.async_show_form(
             step_id="work_calendar",
             data_schema=_work_calendar_schema(
@@ -383,39 +325,32 @@ class WorklogOptionsFlow(config_entries.OptionsFlow):
             errors=errors,
         )
 
-    async def _next_options_step(self):
-        if self._draft_config.get(CONF_HOME_OFFICE_ENABLED):
-            return await self.async_step_homeoffice()
-        self._clear_homeoffice_sources()
-        return await self._next_calendar_options_step()
+    async def async_step_disable_homeoffice(self, user_input: dict[str, Any] | None = None):
+        """Disable Homeoffice and clear its sources."""
+        self._draft_config.update({
+            CONF_HOME_OFFICE_ENABLED: False,
+            CONF_HOME_ZONE: None,
+            CONF_DEVICE_TRACKER: None,
+            CONF_WORK_SIGNAL: None,
+        })
+        return await self.async_step_manage()
 
-    async def _next_calendar_options_step(self):
-        if self._draft_config.get(CONF_WORK_CALENDAR_ENABLED):
-            return await self.async_step_work_calendar()
+    async def async_step_disable_work_calendar(self, user_input: dict[str, Any] | None = None):
+        """Disable the work calendar and clear its selection."""
+        self._draft_config[CONF_WORK_CALENDAR_ENABLED] = False
         self._draft_config[CONF_WORK_CALENDAR] = None
-        return self._create_options_entry()
+        return await self.async_step_manage()
 
-    def _clear_homeoffice_sources(self):
-        self._draft_config[CONF_HOME_ZONE] = None
-        self._draft_config[CONF_DEVICE_TRACKER] = None
-        self._draft_config[CONF_WORK_SIGNAL] = None
-
-    def _create_options_entry(self):
-        errors = {
-            key: key
-            for key in _find_conflicts(
-                self.hass,
-                self._draft_config,
-                exclude_entry_id=self.config_entry.entry_id,
-            )
-        }
+    async def async_step_finish(self, user_input: dict[str, Any] | None = None):
+        """Save all option changes."""
+        errors = {key: key for key in _find_conflicts(
+            self.hass, self._draft_config,
+            exclude_entry_id=self.config_entry.entry_id
+        )}
         if errors:
             return self.async_show_form(
                 step_id="init",
-                data_schema=_base_schema(
-                    self._draft_config,
-                    include_person=False,
-                ),
+                data_schema=_base_schema(self._draft_config, include_person=False),
                 errors=errors,
             )
         values = dict(self._draft_config)
