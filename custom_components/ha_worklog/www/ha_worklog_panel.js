@@ -1,6 +1,7 @@
 class HAWorklogPanel extends HTMLElement {
   constructor() {
     super();
+    this.attachShadow({ mode: "open" });
     this._tab = "calendar";
     this._month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     this._selected = null;
@@ -28,7 +29,7 @@ class HAWorklogPanel extends HTMLElement {
   }
 
   _applyTheme(hass) {
-    const root = document.documentElement;
+    const root = this;
     const themes = hass?.themes;
     if (!root || !themes) return;
     const themeName = themes.theme || themes.default_theme;
@@ -43,8 +44,6 @@ class HAWorklogPanel extends HTMLElement {
       root.style.setProperty(name, String(value));
       this._haThemeVariables.add(name);
     });
-    document.body.style.backgroundColor = "var(--primary-background-color,#fafafa)";
-    document.body.style.color = "var(--primary-text-color,#212121)";
   }
 
   set narrow(value) {
@@ -270,26 +269,26 @@ class HAWorklogPanel extends HTMLElement {
       : tab === "config"
         ? "<ha-card><h2>Konfigurator</h2><p>Die Beta erkennt einen Tag ab 30 Minuten in der Arbeitszone oder mit aktivem Homeoffice-Sensor.</p><p>Sensoren und Arbeitszone werden über die Einstellungen der Integration gewählt.</p><ul>" + (sensorLines || "<li>Die Entitäten erscheinen nach dem ersten Erkennungslauf.</li>") + "</ul></ha-card>"
         : "<ha-card><h2>Export</h2><p>Der Export ist für eine spätere Version vorgesehen.</p></ha-card>";
-    this.innerHTML = "<style>body{margin:0;background:var(--primary-background-color,#fafafa);color:var(--primary-text-color,#212121)}ha-worklog-panel{display:block;color:var(--primary-text-color,inherit);background:var(--primary-background-color,transparent);min-height:100vh;font-family:var(--paper-font-body1_-_font-family,Roboto,Noto,sans-serif)}.page{max-width:1050px;margin:auto;padding:24px}.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}.top h1{font-size:24px;font-weight:500;margin:0}.tabs{display:flex;gap:8px;border-bottom:1px solid var(--divider-color);margin-bottom:20px}.tabs button,.actions button,.month-nav,.today-nav{font:inherit;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:8px;padding:9px 14px;cursor:pointer}.tabs button.active{color:var(--primary-color);border-color:var(--primary-color)}ha-card{display:block;background:var(--card-background-color);color:var(--primary-text-color);border-radius:12px;padding:20px;box-shadow:var(--ha-card-box-shadow,0 2px 8px rgba(0,0,0,.12))}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.calendar-head h2{font-size:20px;font-weight:500;margin:0;text-transform:capitalize}.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:var(--secondary-text-color);font-size:13px;padding:8px 0}.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;color:var(--secondary-text-color);font-size:13px}.legend span{display:inline-flex;align-items:center;gap:6px}.legend-dot{width:11px;height:11px;border-radius:50%;display:inline-block}.office-dot{background:var(--info-color,#039be5)}.home-dot{background:var(--success-color,#43a047)}.vacation-dot{background:var(--warning-color,#fbc02d)}.sick-dot{background:var(--error-color,#db4437)}.tracking-dot{background:var(--state-icon-color,#9e9e9e)}.no-work-dot{background:var(--divider-color,#9e9e9e)}.weekday.weekend-label{color:var(--warning-color,var(--primary-color));font-weight:600}.day{position:relative;min-height:44px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);font:inherit;cursor:pointer}.day.weekend{background:var(--secondary-background-color,var(--card-background-color));border-bottom:3px solid var(--warning-color,var(--primary-color))}.day.outside{opacity:.45}.day.selected{outline:2px solid var(--primary-color)}.day.manual::after{content:'';position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--primary-text-color);opacity:.8;box-shadow:0 0 0 1px var(--card-background-color)}.manual-dot{background:var(--primary-text-color);opacity:.7}.person-switch{display:flex;align-items:center;gap:10px;margin:0 0 12px}.person-switch select,.reason input{font:inherit;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:6px;padding:8px}.reason{display:grid;gap:6px;max-width:420px}.change-history{margin-top:12px;color:var(--secondary-text-color)}.change-history ul{padding-left:20px}.change-history time{font-variant-numeric:tabular-nums}.day.type-office,.day.type-office_and_home_office{background:var(--info-color,#039be5);color:var(--text-primary-color,#fff)}.day.type-home_office{background:var(--success-color,#43a047);color:var(--text-primary-color,#fff)}.day.type-vacation{background:var(--warning-color,#fbc02d);color:var(--primary-text-color)}.day.type-sick_leave,.day.type-needs_review{background:var(--error-color,#db4437);color:var(--text-primary-color,#fff)}.day.type-tracking{background:var(--state-icon-color,#9e9e9e)}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 16px}.stat{display:flex;flex-direction:column;gap:4px;background:var(--secondary-background-color,var(--card-background-color));border-radius:8px;padding:10px 12px}.stat span{color:var(--secondary-text-color);font-size:12px}.stat strong{font-size:20px;font-weight:500}.selection{border-top:1px solid var(--divider-color);margin-top:20px;padding-top:12px}.selection h3{font-size:17px;margin:0 0 6px}.selection p{color:var(--secondary-text-color)}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{padding:8px 10px}.message:empty{display:none}.message{min-height:1em}ha-card>h2{font-weight:500}.page li{margin:8px 0}@media(max-width:600px){.page{padding:12px}.day{min-height:38px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{gap:3px}.tabs{overflow-x:auto}.tabs button{white-space:nowrap;padding:8px 10px}}</style><div class='page'><div class='top'><ha-menu-button></ha-menu-button><h1>HA Work-Log</h1></div><div class='tabs'><button data-tab='calendar' class='" + (tab === "calendar" ? "active" : "") + "'>Kalender</button><button data-tab='config' class='" + (tab === "config" ? "active" : "") + "'>Konfigurator</button><button data-tab='export' class='" + (tab === "export" ? "active" : "") + "'>Export</button></div>" + content + "</div>";
-    const menu = this.querySelector("ha-menu-button");
+    this.shadowRoot.innerHTML = "<style>:host{display:block;color:var(--primary-text-color,inherit);background:var(--primary-background-color,transparent);min-height:100vh;font-family:var(--paper-font-body1_-_font-family,Roboto,Noto,sans-serif)}.page{max-width:1050px;margin:auto;padding:24px}.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}.top h1{font-size:24px;font-weight:500;margin:0}.tabs{display:flex;gap:8px;border-bottom:1px solid var(--divider-color);margin-bottom:20px}.tabs button,.actions button,.month-nav,.today-nav{font:inherit;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:8px;padding:9px 14px;cursor:pointer}.tabs button.active{color:var(--primary-color);border-color:var(--primary-color)}ha-card{display:block;background:var(--card-background-color);color:var(--primary-text-color);border-radius:12px;padding:20px;box-shadow:var(--ha-card-box-shadow,0 2px 8px rgba(0,0,0,.12))}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.calendar-head h2{font-size:20px;font-weight:500;margin:0;text-transform:capitalize}.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:var(--secondary-text-color);font-size:13px;padding:8px 0}.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;color:var(--secondary-text-color);font-size:13px}.legend span{display:inline-flex;align-items:center;gap:6px}.legend-dot{width:11px;height:11px;border-radius:50%;display:inline-block}.office-dot{background:var(--info-color,#039be5)}.home-dot{background:var(--success-color,#43a047)}.vacation-dot{background:var(--warning-color,#fbc02d)}.sick-dot{background:var(--error-color,#db4437)}.tracking-dot{background:var(--state-icon-color,#9e9e9e)}.no-work-dot{background:var(--divider-color,#9e9e9e)}.weekday.weekend-label{color:var(--warning-color,var(--primary-color));font-weight:600}.day{position:relative;min-height:44px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);font:inherit;cursor:pointer}.day.weekend{background:var(--secondary-background-color,var(--card-background-color));border-bottom:3px solid var(--warning-color,var(--primary-color))}.day.outside{opacity:.45}.day.selected{outline:2px solid var(--primary-color)}.day.manual::after{content:'';position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--primary-text-color);opacity:.8;box-shadow:0 0 0 1px var(--card-background-color)}.manual-dot{background:var(--primary-text-color);opacity:.7}.person-switch{display:flex;align-items:center;gap:10px;margin:0 0 12px}.person-switch select,.reason input{font:inherit;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:6px;padding:8px}.reason{display:grid;gap:6px;max-width:420px}.change-history{margin-top:12px;color:var(--secondary-text-color)}.change-history ul{padding-left:20px}.change-history time{font-variant-numeric:tabular-nums}.day.type-office,.day.type-office_and_home_office{background:var(--info-color,#039be5);color:var(--text-primary-color,#fff)}.day.type-home_office{background:var(--success-color,#43a047);color:var(--text-primary-color,#fff)}.day.type-vacation{background:var(--warning-color,#fbc02d);color:var(--primary-text-color)}.day.type-sick_leave,.day.type-needs_review{background:var(--error-color,#db4437);color:var(--text-primary-color,#fff)}.day.type-tracking{background:var(--state-icon-color,#9e9e9e)}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 16px}.stat{display:flex;flex-direction:column;gap:4px;background:var(--secondary-background-color,var(--card-background-color));border-radius:8px;padding:10px 12px}.stat span{color:var(--secondary-text-color);font-size:12px}.stat strong{font-size:20px;font-weight:500}.selection{border-top:1px solid var(--divider-color);margin-top:20px;padding-top:12px}.selection h3{font-size:17px;margin:0 0 6px}.selection p{color:var(--secondary-text-color)}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{padding:8px 10px}.message:empty{display:none}.message{min-height:1em}ha-card>h2{font-weight:500}.page li{margin:8px 0}@media(max-width:600px){.page{padding:12px}.day{min-height:38px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{gap:3px}.tabs{overflow-x:auto}.tabs button{white-space:nowrap;padding:8px 10px}}</style><div class='page'><div class='top'><ha-menu-button></ha-menu-button><h1>HA Work-Log</h1></div><div class='tabs'><button data-tab='calendar' class='" + (tab === "calendar" ? "active" : "") + "'>Kalender</button><button data-tab='config' class='" + (tab === "config" ? "active" : "") + "'>Konfigurator</button><button data-tab='export' class='" + (tab === "export" ? "active" : "") + "'>Export</button></div>" + content + "</div>";
+    const menu = this.shadowRoot.querySelector("ha-menu-button");
     if (menu) menu.hass = this._hass;
-    this.querySelectorAll("[data-tab]").forEach((button) => button.addEventListener("click", () => {
+    this.shadowRoot.querySelectorAll("[data-tab]").forEach((button) => button.addEventListener("click", () => {
       this._tab = button.dataset.tab;
       this._render();
       if (this._tab === "calendar") this._loadEvents();
     }));
-    this.querySelectorAll("[data-date]").forEach((button) => button.addEventListener("click", () => {
+    this.shadowRoot.querySelectorAll("[data-date]").forEach((button) => button.addEventListener("click", () => {
       this._selected = button.dataset.date;
       this._render();
     }));
-    this.querySelector("[data-action='prev']")?.addEventListener("click", () => {
+    this.shadowRoot.querySelector("[data-action='prev']")?.addEventListener("click", () => {
       this._month = new Date(this._month.getFullYear(), this._month.getMonth() - 1, 1);
       this._selected = null;
       this._loadedMonth = "";
       this._render();
       this._loadEvents();
     });
-    this.querySelector("[data-action='today']")?.addEventListener("click", () => {
+    this.shadowRoot.querySelector("[data-action='today']")?.addEventListener("click", () => {
       const today = new Date();
       const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       if (this._isoDate(currentMonth) !== this._isoDate(this._month)) this._loadedMonth = "";
@@ -298,14 +297,14 @@ class HAWorklogPanel extends HTMLElement {
       this._render();
       this._loadEvents();
     });
-    this.querySelector("[data-action='next']")?.addEventListener("click", () => {
+    this.shadowRoot.querySelector("[data-action='next']")?.addEventListener("click", () => {
       this._month = new Date(this._month.getFullYear(), this._month.getMonth() + 1, 1);
       this._selected = null;
       this._loadedMonth = "";
       this._render();
       this._loadEvents();
     });
-    this.querySelector("[data-calendar]")?.addEventListener("change", async (event) => {
+    this.shadowRoot.querySelector("[data-calendar]")?.addEventListener("change", async (event) => {
       this._calendarEntityId = event.target.value || null;
       this._loadedMonth = "";
       this._events = [];
@@ -313,11 +312,11 @@ class HAWorklogPanel extends HTMLElement {
       this._render();
       await this._loadEvents();
     });
-    this.querySelectorAll("[data-type]").forEach((button) => button.addEventListener("click", async () => {
+    this.shadowRoot.querySelectorAll("[data-type]").forEach((button) => button.addEventListener("click", async () => {
       if (this._busy) return;
       const selectedCalendar = this._calendarEntity();
       const personEntity = selectedCalendar?.attributes.worklog_person_entity;
-      const reason = this.querySelector("[data-reason]")?.value?.trim() || "";
+      const reason = this.shadowRoot.querySelector("[data-reason]")?.value?.trim() || "";
       this._busy = true;
       this._message = "Speichere Änderung …";
       this._render();
