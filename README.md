@@ -1,13 +1,15 @@
-# HA-Worklog
+# Steuertage
 
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Integration-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
 [![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-1-0)
 
-**HA Work-Log** erfasst Arbeitszeit-Signale und ordnet einen Tag erst nach einer konfigurierbaren Mindestdauer als Homeoffice- oder Bürotag ein. Unklare Standorte werden ausdrücklich als prüfbedürftig markiert.
+*Büro- und Homeoffice-Tage für die Steuererklärung*
+
+**Steuertage** erfasst Arbeitszeit-Signale und ordnet einen Tag erst nach einer konfigurierbaren Mindestdauer als Homeoffice- oder Bürotag ein. Unklare Standorte werden ausdrücklich als prüfbedürftig markiert.
 
 ## Beta 0.1.0
 
-Die erste Beta enthält eine Home-Assistant-Custom-Integration mit Einrichtung über **Einstellungen → Geräte & Dienste → Integration hinzufügen → HA Work-Log**.
+Die erste Beta enthält eine Home-Assistant-Custom-Integration mit Einrichtung über **Einstellungen → Geräte & Dienste → Integration hinzufügen → Steuertage**.
 
 Bei der Einrichtung werden gewählt:
 
@@ -25,7 +27,7 @@ Tageswerte werden lokal in Home Assistant gespeichert und beim Neustart wiederhe
 1. Lade den Inhalt dieses Branches herunter.
 2. Kopiere `custom_components/ha_worklog` nach `<config>/custom_components/ha_worklog`.
 3. Starte Home Assistant neu.
-4. Füge unter **Einstellungen → Geräte & Dienste** die Integration **HA Work-Log** hinzu.
+4. Füge unter **Einstellungen → Geräte & Dienste** die Integration **Steuertage** hinzu.
 5. Wähle die Person, das Arbeitssignal und die Bürozone. Verwende zunächst die Standard-Mindestarbeitszeit von 2 Stunden oder passe sie an.
 
 Entfernen: Integration in Home Assistant löschen, danach den Ordner `custom_components/ha_worklog` entfernen und HA neu starten.
@@ -38,7 +40,7 @@ Entfernen: Integration in Home Assistant löschen, danach den Ordner `custom_com
 
 ## Projekt und Entwicklungsgrundsätze
 
-HA Work-Log wird mit KI-Unterstützung entwickelt (Vibecoding). Anforderungen, fachliche Entscheidungen und Release-Freigaben liegen beim Projektverantwortlichen. KI unterstützt bei Planung, Architektur, Implementierung, Dokumentation und Tests.
+Steuertage wird mit KI-Unterstützung entwickelt (Vibecoding). Anforderungen, fachliche Entscheidungen und Release-Freigaben liegen beim Projektverantwortlichen. KI unterstützt bei Planung, Architektur, Implementierung, Dokumentation und Tests.
 
 Änderungen werden in Git versioniert und nachvollziehbar veröffentlicht. Der vorgesehene Ablauf ist, neue Änderungen zuerst im `beta`-Zweig zu erproben und geprüfte Änderungen anschließend in `main` als stabile Releases zu veröffentlichen.
 
