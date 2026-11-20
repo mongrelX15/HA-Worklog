@@ -1,6 +1,7 @@
 """Steuertage integration."""
 from __future__ import annotations
 
+import hashlib
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -30,7 +31,8 @@ from .coordinator import DAY_TYPES, WorklogCoordinator
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
 PANEL_PATH = "steuertage"
-PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=beta8-cache-refresh"
+PANEL_ASSET = Path(__file__).parent / "www" / "steuertage_panel.js"
+PANEL_MODULE = f"/steuertage_static/steuertage_panel.js?v={hashlib.sha256(PANEL_ASSET.read_bytes()).hexdigest()[:16]}"
 PANEL_STATIC_URL = "/steuertage_static"
 PANEL_SERVICE = "set_day_override"
 MANUAL_DAY_TYPES = set(DAY_TYPES) | {"automatic"}
