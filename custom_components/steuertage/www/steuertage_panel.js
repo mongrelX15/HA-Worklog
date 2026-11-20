@@ -524,9 +524,6 @@ class SteuertagePanel extends HTMLElement {
         (!a.worklog_office_zone_entity ? "<p class='muted'>Keine Zone für die Arbeitsstätte hinterlegt: Arbeitstage werden nicht automatisch erkannt.</p>" : "") +
         "</section>";
     }).join("");
-    const calendarAttributes = this._calendarEntity()?.attributes || {};
-    const threshold = Number(calendarAttributes.worklog_threshold_hours ?? (calendarAttributes.worklog_threshold_minutes != null ? calendarAttributes.worklog_threshold_minutes / 60 : 2))
-      .toLocaleString(this._hass?.locale?.language || "de-DE", { maximumFractionDigits: 1 });
     return "<ha-card><header class='view-header'><div><span class='eyebrow'>EINSTELLUNGEN</span><h2>Konfiguration</h2><p>Personen, Erkennung und Schwellwerte im Blick behalten.</p></div><span class='header-badge'>"+calendars.length+" "+(calendars.length === 1 ? "Person" : "Personen")+"</span></header>" +
       (cards || "<p>Richte zuerst eine Person über Einstellungen → Geräte &amp; Dienste → Integration hinzufügen → Steuertage ein.</p>");
 
