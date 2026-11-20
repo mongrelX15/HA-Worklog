@@ -31,6 +31,10 @@ Manuelle Korrekturen werden der betroffenen Person und dem angemeldeten HA-Benut
 
 Der Kalender zeigt Tagesstatus, Wochenenden, Monatsstatistik und dezente Hinweise auf manuell geänderte Tage. Das Theme des Home-Assistant-Benutzers wird übernommen. Die Reiter **Konfigurator** und **Export** sind vorbereitet; Sensoren, Zonen und Benutzer werden aktuell über die Integrationsoptionen angepasst, der Export-Reiter hat noch keine Exportfunktion.
 
+## Hinweis zum Umstieg von HA Work-Log
+
+Diese Version verwendet die neue Integrations-Domain `steuertage` und den Ordner `custom_components/steuertage`. Sie ist daher ein Neustart und kein direktes Upgrade der bisherigen `ha_worklog`-Integration. Entferne die alte HA Work-Log-Integration in Home Assistant und sichere benötigte Daten vorher separat. Anschließend installierst du Steuertage neu und richtest die Personen erneut ein. Alte Konfigurationen und lokale Verläufe werden nicht automatisch übernommen.
+
 ## Bestehende Beta-7-Konfigurationen
 
 Beim Upgrade bleibt die bestehende Konfiguration und der lokale Verlauf unter derselben Integrations-ID erhalten. Ältere Einträge können in den Optionen zunächst weiterhin den bisherigen Homeoffice-Binary-Sensor nutzen. Für die neue Erkennung kann ein `device_tracker` ausgewählt werden; danach wird der bisherige Sensor nicht mehr für die automatische Erkennung verwendet.
