@@ -77,7 +77,7 @@ class HAWorklogPanel extends HTMLElement {
     return calendars.find((item) => item.entity_id === this._calendarEntityId) ||
       calendars.find((item) => item.attributes.worklog_user_id &&
         item.attributes.worklog_user_id === this._hass?.user?.id) ||
-      calendars[0];
+      (calendars.length === 1 ? calendars[0] : undefined);
   }
 
   _calendarLabel(calendar) {
@@ -240,7 +240,7 @@ class HAWorklogPanel extends HTMLElement {
       .map((item) => "<li>" + this._escape(item.attributes.friendly_name || item.entity_id) + ": " + this._escape(item.state) + "</li>").join("");
     const calendars = this._calendarEntities();
     const calendarSelector = calendars.length > 1
-      ? "<div class='person-switch'><label for='worklog-person'>Person</label><select id='worklog-person' data-calendar>" + calendars.map((item) => "<option value='" + item.entity_id + "'" + (item.entity_id === this._calendarEntityId ? " selected" : "") + ">" + this._escape(this._calendarLabel(item)) + "</option>").join("") + "</select></div>"
+      ? "<div class='person-switch'><label for='worklog-person'>Person</label><select id='worklog-person' data-calendar>" + (this._calendarEntityId ? "" : "<option value='' selected>Person auswählen …</option>") + calendars.map((item) => "<option value='" + item.entity_id + "'" + (item.entity_id === this._calendarEntityId ? " selected" : "") + ">" + this._escape(this._calendarLabel(item)) + "</option>").join("") + "</select></div>"
       : "";
     const selectedHistory = this._changeHistory(selectedEvent);
     const selectedHistoryMarkup = selectedHistory.length
@@ -255,7 +255,7 @@ class HAWorklogPanel extends HTMLElement {
       : "";
     const tab = this._tab;
     const content = tab === "calendar"
-      ? (this._calendarEntity() ? "<ha-card>" + calendarSelector + "<div class='calendar-head'><button class='month-nav' data-action='prev' aria-label='Vorheriger Monat'>‹</button><h2>" + title + "</h2><button class='today-nav' data-action='today' aria-label='Zum heutigen Datum springen'>Heute</button><button class='month-nav' data-action='next' aria-label='Nächster Monat'>›</button></div><div class='stats'>" + [{ label: "Arbeitstage", value: monthStats.workdays }, { label: "Büro", value: monthStats.office }, { label: "Homeoffice", value: monthStats.homeOffice }, { label: "Urlaub", value: monthStats.vacation }, { label: "Krankheit", value: monthStats.sick }].map((item) => "<div class='stat'><span>" + item.label + "</span><strong>" + item.value + "</strong></div>").join("") + "</div><div class='grid'>" + headers + cells + "</div><div class='legend'><span><i class='legend-dot office-dot'></i>Büro</span><span><i class='legend-dot home-dot'></i>Homeoffice</span><span><i class='legend-dot vacation-dot'></i>Urlaub</span><span><i class='legend-dot sick-dot'></i>Krankheit</span><span><i class='legend-dot tracking-dot'></i>Erkennung läuft</span><span><i class='legend-dot no-work-dot'></i>Kein Arbeitstag</span><span><i class='legend-dot manual-dot'></i>Manuell geändert</span></div>" + (this._selected ? "<div class='selection'><h3>" + this._selected + "</h3><p>" + this._label(selectedType) + (selectedEvent?.description?.includes('Manuell geändert') ? " · manuell geändert" : "") + "</p><label class='reason'>Änderungsgrund (optional)<input data-reason type='text' maxlength='500' /></label><div class='actions'><button data-type='office'>Bürotag</button><button data-type='home_office'>Homeoffice</button><button data-type='no_work'>Kein Arbeitstag</button><button data-type='vacation'>Urlaub</button><button data-type='sick_leave'>Krankheit</button><button data-type='automatic'>Automatisch</button></div>" + selectedHistoryMarkup + "<p class='message'>" + this._message + "</p></div>" : "") + "</ha-card>" : "<ha-card><p>Es ist noch keine Person für HA Work-Log eingerichtet.</p></ha-card>")
+      ? (this._calendarEntity() ? "<ha-card>" + calendarSelector + "<div class='calendar-head'><button class='month-nav' data-action='prev' aria-label='Vorheriger Monat'>‹</button><h2>" + title + "</h2><button class='today-nav' data-action='today' aria-label='Zum heutigen Datum springen'>Heute</button><button class='month-nav' data-action='next' aria-label='Nächster Monat'>›</button></div><div class='stats'>" + [{ label: "Arbeitstage", value: monthStats.workdays }, { label: "Büro", value: monthStats.office }, { label: "Homeoffice", value: monthStats.homeOffice }, { label: "Urlaub", value: monthStats.vacation }, { label: "Krankheit", value: monthStats.sick }].map((item) => "<div class='stat'><span>" + item.label + "</span><strong>" + item.value + "</strong></div>").join("") + "</div><div class='grid'>" + headers + cells + "</div><div class='legend'><span><i class='legend-dot office-dot'></i>Büro</span><span><i class='legend-dot home-dot'></i>Homeoffice</span><span><i class='legend-dot vacation-dot'></i>Urlaub</span><span><i class='legend-dot sick-dot'></i>Krankheit</span><span><i class='legend-dot tracking-dot'></i>Erkennung läuft</span><span><i class='legend-dot no-work-dot'></i>Kein Arbeitstag</span><span><i class='legend-dot manual-dot'></i>Manuell geändert</span></div>" + (this._selected ? "<div class='selection'><h3>" + this._selected + "</h3><p>" + this._label(selectedType) + (selectedEvent?.description?.includes('Manuell geändert') ? " · manuell geändert" : "") + "</p><label class='reason'>Änderungsgrund (optional)<input data-reason type='text' maxlength='500' /></label><div class='actions'><button data-type='office'>Bürotag</button><button data-type='home_office'>Homeoffice</button><button data-type='no_work'>Kein Arbeitstag</button><button data-type='vacation'>Urlaub</button><button data-type='sick_leave'>Krankheit</button><button data-type='automatic'>Automatisch</button></div>" + selectedHistoryMarkup + "<p class='message'>" + this._message + "</p></div>" : "") + "</ha-card>" : calendars.length > 1 ? "<ha-card>" + calendarSelector + "<p>Bitte wähle eine Person aus, um den Kalender zu öffnen.</p></ha-card>" : "<ha-card><p>Es ist noch keine Person für HA Work-Log eingerichtet.</p></ha-card>")
       : tab === "config"
         ? "<ha-card><h2>Konfigurator</h2><p>Die Beta erkennt einen Tag ab 30 Minuten in der Arbeitszone oder mit aktivem Homeoffice-Sensor.</p><p>Sensoren und Arbeitszone werden über die Einstellungen der Integration gewählt.</p><ul>" + (sensorLines || "<li>Die Entitäten erscheinen nach dem ersten Erkennungslauf.</li>") + "</ul></ha-card>"
         : "<ha-card><h2>Export</h2><p>Der Export ist für eine spätere Version vorgesehen.</p></ha-card>";
@@ -295,7 +295,7 @@ class HAWorklogPanel extends HTMLElement {
       this._loadEvents();
     });
     this.querySelector("[data-calendar]")?.addEventListener("change", async (event) => {
-      this._calendarEntityId = event.target.value;
+      this._calendarEntityId = event.target.value || null;
       this._loadedMonth = "";
       this._events = [];
       this._selected = null;
