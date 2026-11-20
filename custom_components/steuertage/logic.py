@@ -1,4 +1,4 @@
-"""Pure classification helpers used by HA Work-Log."""
+"""Pure classification helpers used by Steuertage."""
 from __future__ import annotations
 
 from .const import BETA_THRESHOLD_SECONDS, DOMAIN

@@ -47,8 +47,8 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
         self._attr_unique_id = f"{entry.entry_id}_work_calendar"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": f"HA Work-Log – {coordinator.person_name}",
-            "manufacturer": "HA Work-Log",
+            "name": f"Steuertage – {coordinator.person_name}",
+            "manufacturer": "Steuertage",
             "model": "Beta",
         }
 
@@ -90,7 +90,7 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
             description += f" Manuell geändert zu: {summary}."
         change_history = record.get("change_history", [])
         if change_history:
-            description += "\nHA_WORKLOG_HISTORY:" + json.dumps(
+            description += "\nSTEUERTAGE_HISTORY:" + json.dumps(
                 change_history, ensure_ascii=False, separators=(",", ":")
             )
         return CalendarEvent(

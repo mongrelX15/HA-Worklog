@@ -1,13 +1,13 @@
-# HA Work-Log
+# Steuertage
 
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Integration-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
 [![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-1-0)
 
-**HA Work-Log** erkennt steuerlich relevante Arbeitstage. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
+**Steuertage** erfasst Büro- und Homeoffice-Tage für die Steuererklärung. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
 
 ## Beta 0.1.0-beta.10 – Multiuser- und Homeoffice-Vorschau
 
-Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → HA Work-Log** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
+Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → Steuertage** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
 
 - **Person**: Home-Assistant-Person
 - **Home-Zone**: standardmäßig `zone.home`
@@ -23,7 +23,7 @@ Ein Arbeitstag zählt, wenn die konfigurierte Büro-Zone oder die Homeoffice-Erk
 
 Jede Person erhält einen eigenen Kalender, Tagestyp-Sensor, Homeoffice-Sensor und getrennten lokalen Verlauf. Derselbe Büro- oder Home-Zonenbereich kann von mehreren Personen verwendet werden; eine Person und ein Homeoffice-Gerät können jeweils nur einer Konfiguration zugeordnet sein.
 
-Das Panel **HA Work-Log** wird einmalig in der Seitenleiste angelegt. Es ermöglicht allen angemeldeten Benutzern den Wechsel zwischen eingerichteten Kalendern und manuelle Korrekturen. Ist einer Person ein HA-Benutzer zugeordnet, öffnet sich dessen Kalender standardmäßig; die Auswahl bleibt jederzeit veränderbar.
+Das Panel **Steuertage** wird einmalig in der Seitenleiste angelegt. Es ermöglicht allen angemeldeten Benutzern den Wechsel zwischen eingerichteten Kalendern und manuelle Korrekturen. Ist einer Person ein HA-Benutzer zugeordnet, öffnet sich dessen Kalender standardmäßig; die Auswahl bleibt jederzeit veränderbar.
 
 Manuelle Korrekturen werden der betroffenen Person und dem angemeldeten HA-Benutzer zugeordnet. Die Historie speichert Zeitpunkt, alten und neuen Status sowie optional einen Änderungsgrund. Ein übergebener Benutzername wird nicht als Identität verwendet.
 
@@ -40,14 +40,14 @@ Bei der Umstellung werden frühere Datensätze nach Möglichkeit übernommen. Ve
 ## Installation und Test
 
 1. Installiere die Beta über HACS oder den Beta-Zweig des Repositories.
-2. Starte Home Assistant neu oder lade HA Work-Log neu.
-3. Öffne **Einstellungen → Geräte & Dienste → HA Work-Log** und prüfe die Personeneinstellungen und neuen Entitäten.
-4. Füge eine weitere Person über **Integration hinzufügen → HA Work-Log** hinzu und öffne anschließend das Seitenleisten-Panel.
+2. Starte Home Assistant neu oder lade Steuertage neu.
+3. Öffne **Einstellungen → Geräte & Dienste → Steuertage** und prüfe die Personeneinstellungen und neuen Entitäten.
+4. Füge eine weitere Person über **Integration hinzufügen → Steuertage** hinzu und öffne anschließend das Seitenleisten-Panel.
 
-Entfernen: Integration in Home Assistant löschen, danach den Ordner `custom_components/ha_worklog` entfernen und Home Assistant neu starten.
+Entfernen: Integration in Home Assistant löschen, danach den Ordner `custom_components/steuertage` entfernen und Home Assistant neu starten.
 
 ## Projekt und Entwicklungsgrundsätze
 
-HA Work-Log wird mit KI-Unterstützung entwickelt (Vibecoding). Anforderungen und fachliche Entscheidungen kommen vom Projektverantwortlichen. Änderungen werden in Git zunächst im `beta`-Zweig erprobt; geprüfte Änderungen werden später als stabile Version in `main` veröffentlicht.
+Steuertage wird mit KI-Unterstützung entwickelt (Vibecoding). Anforderungen und fachliche Entscheidungen kommen vom Projektverantwortlichen. Änderungen werden in Git zunächst im `beta`-Zweig erprobt; geprüfte Änderungen werden später als stabile Version in `main` veröffentlicht.
 
 Beta-Versionen können unvollständig sein oder Fehler enthalten. Ein Test in einer separaten Home-Assistant-Testinstanz wird empfohlen.

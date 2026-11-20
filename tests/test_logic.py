@@ -3,8 +3,8 @@ from pathlib import Path
 import sys
 from types import ModuleType
 
-logic_path = Path(__file__).parents[1] / "custom_components" / "ha_worklog" / "logic.py"
-package_name = "ha_worklog_test_package"
+logic_path = Path(__file__).parents[1] / "custom_components" / "steuertage" / "logic.py"
+package_name = "steuertage_test_package"
 package = ModuleType(package_name)
 package.__path__ = [str(logic_path.parent)]
 sys.modules[package_name] = package

@@ -1,4 +1,4 @@
-"""HA Work-Log integration."""
+"""Steuertage integration."""
 from __future__ import annotations
 
 from datetime import timedelta
@@ -27,9 +27,9 @@ from .const import (
 from .coordinator import DAY_TYPES, WorklogCoordinator
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
-PANEL_PATH = "ha-worklog"
-PANEL_MODULE = "/ha_worklog_static/ha_worklog_panel.js?v=0.1.0-beta.10"
-PANEL_STATIC_URL = "/ha_worklog_static"
+PANEL_PATH = "steuertage"
+PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.1.0-beta.10"
+PANEL_STATIC_URL = "/steuertage_static"
 PANEL_SERVICE = "set_day_override"
 MANUAL_DAY_TYPES = set(DAY_TYPES) | {"automatic"}
 
@@ -53,8 +53,8 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
         await panel_custom.async_register_panel(
             hass=hass,
             frontend_url_path=PANEL_PATH,
-            webcomponent_name="ha-worklog-panel",
-            sidebar_title="HA Work-Log",
+            webcomponent_name="steuertage-panel",
+            sidebar_title="Steuertage",
             sidebar_icon="mdi:calendar-check",
             module_url=PANEL_MODULE,
             config={},
@@ -82,7 +82,7 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
                 )
             except StopIteration as err:
                 raise ServiceValidationError(
-                    "Für diese Person ist kein HA Work-Log eingerichtet."
+                    "Für diese Person ist kein Steuertage eingerichtet."
                 ) from err
             try:
                 user = await hass.auth.async_get_user(changed_by)

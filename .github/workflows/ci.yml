@@ -47,10 +47,10 @@ jobs:
 
       - name: Validate translations and panel script
         run: |
-          python -m json.tool custom_components/ha_worklog/strings.json > /dev/null
-          python -m json.tool custom_components/ha_worklog/translations/de.json > /dev/null
-          python -m json.tool custom_components/ha_worklog/translations/en.json > /dev/null
-          node --check custom_components/ha_worklog/www/ha_worklog_panel.js
+          python -m json.tool custom_components/steuertage/strings.json > /dev/null
+          python -m json.tool custom_components/steuertage/translations/de.json > /dev/null
+          python -m json.tool custom_components/steuertage/translations/en.json > /dev/null
+          node --check custom_components/steuertage/www/steuertage_panel.js
 
       - name: Run tests
         run: |

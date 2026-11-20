@@ -39,8 +39,8 @@ class WorklogHomeOfficeSensor(
         self._attr_unique_id = f"{entry.entry_id}_homeoffice_presence"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": f"HA Work-Log – {coordinator.person_name}",
-            "manufacturer": "HA Work-Log",
+            "name": f"Steuertage – {coordinator.person_name}",
+            "manufacturer": "Steuertage",
             "model": "Beta",
         }
 

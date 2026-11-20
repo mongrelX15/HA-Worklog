@@ -1,4 +1,4 @@
-"""Sensors exposed by HA Work-Log."""
+"""Sensors exposed by Steuertage."""
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
@@ -31,8 +31,8 @@ async def async_setup_entry(
 def _device_info(coordinator: WorklogCoordinator, entry: ConfigEntry) -> dict:
     return {
         "identifiers": {(DOMAIN, entry.entry_id)},
-        "name": f"HA Work-Log – {coordinator.person_name}",
-        "manufacturer": "HA Work-Log",
+        "name": f"Steuertage – {coordinator.person_name}",
+        "manufacturer": "Steuertage",
         "model": "Beta",
     }
 

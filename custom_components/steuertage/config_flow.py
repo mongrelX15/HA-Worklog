@@ -1,4 +1,4 @@
-"""Config flow for HA Work-Log."""
+"""Config flow for Steuertage."""
 from __future__ import annotations
 
 from typing import Any
@@ -140,7 +140,7 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     else self._person_entity
                 )
                 return self.async_create_entry(
-                    title=f"HA Work-Log – {title}",
+                    title=f"Steuertage – {title}",
                     data=values,
                 )
 

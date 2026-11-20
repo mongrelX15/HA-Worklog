@@ -1,7 +1,7 @@
-"""Constants for HA Work-Log."""
+"""Constants for Steuertage."""
 from typing import Final
 
-DOMAIN: Final = "ha_worklog"
+DOMAIN: Final = "steuertage"
 CONF_PERSON: Final = "person_entity"
 CONF_WORK_SIGNAL: Final = "work_signal"  # Legacy Beta 7 binary sensor.
 CONF_HOME_ZONE: Final = "home_zone"

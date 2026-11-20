@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "HA Work-Log einrichten",
+        "title": "Steuertage einrichten",
         "description": "Richte eine Person ein. Ein Arbeitstag zählt, sobald die Arbeitszone oder die Homeoffice-Erkennung mindestens 30 Minuten aktiv war.",
         "data": {
           "person_entity": "Person",
@@ -25,7 +25,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "HA Work-Log Einstellungen",
+        "title": "Steuertage Einstellungen",
         "description": "Passe die Personenerkennung an. Ältere Beta-7-Einträge können vorübergehend weiter den bisherigen Homeoffice-Sensor verwenden.",
         "data": {
           "home_zone": "Home-Zone",
