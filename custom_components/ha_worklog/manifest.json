@@ -1,12 +1,12 @@
 {
   "domain": "ha_worklog",
-  "name": "Steuertage",
+  "name": "HA Work-Log",
   "codeowners": [
     "@mongrelX15"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/mongrelX15/Steuertage",
-  "issue_tracker": "https://github.com/mongrelX15/Steuertage/issues",
+  "documentation": "https://github.com/mongrelX15/HA-Worklog",
+  "issue_tracker": "https://github.com/mongrelX15/HA-Worklog/issues",
   "iot_class": "local_push",
   "version": "0.1.0-beta.2",
   "requirements": []
