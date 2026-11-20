@@ -2,6 +2,7 @@
 
 ## Noch nicht veröffentlicht
 
+- Legende: Punkte für die automatische Erkennung und „Erkennung läuft“ lila an die Kalenderdarstellung angepasst.
 - Datenmigration: ältere Krankheits- und Urlaubseinträge werden als manuelle Änderungen behandelt. Beim Zurücksetzen auf automatisch kann die automatische Erkennung diese Abwesenheitstypen nicht mehr übernehmen; ohne Signal wird stattdessen der passende automatische Status angezeigt.
 
 
