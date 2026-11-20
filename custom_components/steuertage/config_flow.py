@@ -178,10 +178,13 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_features(self, user_input: dict[str, Any] | None = None):
         """Offer optional features explicitly instead of implying inline fields."""
-        return self.async_show_menu(
-            step_id="features",
-            menu_options=["homeoffice", "work_calendar", "finish"],
-        )
+        options = ["homeoffice", "work_calendar"]
+        if self._draft_config.get(CONF_HOME_OFFICE_ENABLED):
+            options.append("disable_homeoffice")
+        if self._draft_config.get(CONF_WORK_CALENDAR_ENABLED):
+            options.append("disable_work_calendar")
+        options.append("finish")
+        return self.async_show_menu(step_id="features", menu_options=options)
 
     async def async_step_homeoffice(self, user_input: dict[str, Any] | None = None):
         """Configure Homeoffice only after the user selects that feature."""
@@ -221,6 +224,22 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=_work_calendar_schema(user_input),
             errors=errors,
         )
+
+    async def async_step_disable_homeoffice(self, user_input: dict[str, Any] | None = None):
+        """Remove Homeoffice sources from the initial setup."""
+        self._draft_config.update({
+            CONF_HOME_OFFICE_ENABLED: False,
+            CONF_HOME_ZONE: None,
+            CONF_DEVICE_TRACKER: None,
+            CONF_WORK_SIGNAL: None,
+        })
+        return await self.async_step_features()
+
+    async def async_step_disable_work_calendar(self, user_input: dict[str, Any] | None = None):
+        """Remove the work calendar from the initial setup."""
+        self._draft_config[CONF_WORK_CALENDAR_ENABLED] = False
+        self._draft_config[CONF_WORK_CALENDAR] = None
+        return await self.async_step_features()
 
     async def async_step_finish(self, user_input: dict[str, Any] | None = None):
         """Finish setup with the selected optional features."""
