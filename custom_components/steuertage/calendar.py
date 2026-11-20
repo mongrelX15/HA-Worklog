@@ -92,11 +92,36 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
     def _event_for_day(day: date, record: dict[str, Any]) -> CalendarEvent:
         """Create an all-day event including the full manual-change history."""
         day_type = record.get("day_type", "needs_review")
-        summary = DAY_LABELS.get(day_type, DAY_LABELS["needs_review"])
         automatic = record.get("automatic_day_type", day_type)
-        automatic_summary = DAY_LABELS.get(automatic, DAY_LABELS["needs_review"])
         manual_override = record.get("manual_override")
+        office_seconds = float(record.get("office_seconds", 0))
+        homeoffice_seconds = float(record.get("homeoffice_seconds", 0))
+        mixed_day = bool(record.get("mixed_day")) or (
+            day_type == "office_and_home_office"
+            or automatic == "office_and_home_office"
+            or (
+                office_seconds > 0
+                and homeoffice_seconds > 0
+                and (
+                    day_type in {"office", "home_office", "office_and_home_office"}
+                    or automatic in {"office", "home_office", "office_and_home_office"}
+                )
+            )
+        )
+
+        def primary_type(value: str) -> str:
+            if value != "office_and_home_office":
+                return value
+            return "office" if office_seconds >= homeoffice_seconds else "home_office"
+
+        day_type = primary_type(day_type)
+        automatic = primary_type(automatic)
+        summary = DAY_LABELS.get(day_type, DAY_LABELS["needs_review"])
+        automatic_summary = DAY_LABELS.get(automatic, DAY_LABELS["needs_review"])
         description = f"Automatische Tageserkennung: {automatic_summary}."
+        if mixed_day:
+            description += "\nSTEUERTAGE_MIXED:true"
+            description += f"\nSTEUERTAGE_PRIMARY:{day_type}"
         if manual_override:
             description += f" Manuell geändert zu: {summary}."
         change_history = record.get("change_history", [])

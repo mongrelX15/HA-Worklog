@@ -120,10 +120,23 @@ def normalize_day_record(
     change_history = record.get("change_history", [])
     if not isinstance(change_history, list):
         change_history = []
+    mixed_day = bool(record.get("mixed_day")) or (
+        day_type == "office_and_home_office"
+        or automatic_day_type == "office_and_home_office"
+        or (
+            office_seconds > 0
+            and homeoffice_seconds > 0
+            and (
+                day_type in {"office", "home_office", "office_and_home_office"}
+                or automatic_day_type in {"office", "home_office", "office_and_home_office"}
+            )
+        )
+    )
     return {
         "day_type": manual_override or day_type,
         "automatic_day_type": automatic_day_type,
         "manual_override": manual_override,
+        "mixed_day": mixed_day,
         "office_seconds": round(office_seconds),
         "homeoffice_seconds": round(homeoffice_seconds),
         "change_history": [item for item in change_history if isinstance(item, dict)],

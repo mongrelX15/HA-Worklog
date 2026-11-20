@@ -161,6 +161,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "day_type": self.data["day_type"],
             "automatic_day_type": self.data["automatic_day_type"],
             "manual_override": self.data["manual_override"],
+            "mixed_day": self.data["mixed_day"],
             "office_seconds": round(self._office_seconds),
             "homeoffice_seconds": round(self._homeoffice_seconds),
             "change_history": list(previous.get("change_history", [])),
@@ -285,6 +286,13 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "day_type": new_value,
             "automatic_day_type": automatic,
             "manual_override": override,
+            "mixed_day": bool(existing.get("mixed_day"))
+            or (
+                self.homeoffice_enabled
+                and office_seconds > 0
+                and homeoffice_seconds > 0
+                and automatic in {"office", "home_office", "office_and_home_office"}
+            ),
             "office_seconds": office_seconds,
             "homeoffice_seconds": homeoffice_seconds,
             "change_history": change_history,
@@ -518,6 +526,20 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             threshold_seconds=self.threshold_seconds,
             homeoffice_enabled=self.homeoffice_enabled,
         )
+        mixed_day = bool(
+            self.homeoffice_enabled
+            and self._office_seconds > 0
+            and self._homeoffice_seconds > 0
+            and automatic_day_type
+            in {"office", "home_office", "office_and_home_office"}
+        )
+        if mixed_day:
+            # On an exact time tie, classify as on-site attendance.
+            automatic_day_type = (
+                "office"
+                if self._office_seconds >= self._homeoffice_seconds
+                else "home_office"
+            )
         saved_record = self._history.get(self._date, {})
         manual_override = saved_record.get("manual_override")
         if manual_override not in OVERRIDE_TYPES:
@@ -538,6 +560,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "work_calendar_entity": self.work_calendar_entity,
             "day_type": manual_override or automatic_day_type,
             "automatic_day_type": automatic_day_type,
+            "mixed_day": mixed_day,
             "manual_override": manual_override,
             "office_source_valid": self._office_source_valid,
             "homeoffice_source_valid": self._homeoffice_source_valid,
