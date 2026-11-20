@@ -270,13 +270,13 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _next_setup_step(self):
         if self._draft_config.get(CONF_HOME_OFFICE_ENABLED):
-            return self.async_step_homeoffice()
+            return await self.async_step_homeoffice()
         self._clear_homeoffice_sources()
         return await self._next_calendar_setup_step()
 
     async def _next_calendar_setup_step(self):
         if self._draft_config.get(CONF_WORK_CALENDAR_ENABLED):
-            return self.async_step_work_calendar()
+            return await self.async_step_work_calendar()
         self._draft_config[CONF_WORK_CALENDAR] = None
         return self._create_entry()
 
@@ -385,13 +385,13 @@ class WorklogOptionsFlow(config_entries.OptionsFlow):
 
     async def _next_options_step(self):
         if self._draft_config.get(CONF_HOME_OFFICE_ENABLED):
-            return self.async_step_homeoffice()
+            return await self.async_step_homeoffice()
         self._clear_homeoffice_sources()
         return await self._next_calendar_options_step()
 
     async def _next_calendar_options_step(self):
         if self._draft_config.get(CONF_WORK_CALENDAR_ENABLED):
-            return self.async_step_work_calendar()
+            return await self.async_step_work_calendar()
         self._draft_config[CONF_WORK_CALENDAR] = None
         return self._create_options_entry()
 

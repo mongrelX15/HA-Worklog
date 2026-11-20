@@ -14,10 +14,10 @@
       },
       "homeoffice": {
         "title": "Homeoffice-Erkennung",
-        "description": "Wähle die Home-Zone und den device_tracker für die Homeoffice-Erkennung.",
+        "description": "Wähle deine Home-Zone und das Gerät aus der Home-Assistant-Geräteliste, mit dem Homeoffice erkannt werden soll.",
         "data": {
           "home_zone": "Home-Zone für Homeoffice",
-          "homeoffice_device": "Homeoffice-Gerät (device_tracker)",
+          "homeoffice_device": "Gerät für die Homeoffice-Erkennung",
           "work_signal": "Bisheriger Homeoffice-Sensor (ältere Einrichtung)"
         }
       },
@@ -33,7 +33,7 @@
       "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet.",
       "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
       "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung oder deaktiviere Homeoffice.",
-      "homeoffice_device_required": "Wähle einen device_tracker oder deaktiviere Homeoffice.",
+      "homeoffice_device_required": "Wähle ein Gerät für die Homeoffice-Erkennung aus oder deaktiviere die Homeoffice-Erkennung.",
       "office_zone_required": "Wähle die Arbeitszone (Standort der Arbeit).",
       "work_calendar_required": "Wähle einen Arbeitskalender oder deaktiviere die Arbeitskalender-Option.",
       "user_already_configured": "Diese ältere HA-Benutzerzuordnung ist bereits einer anderen Person zugewiesen."
@@ -56,10 +56,10 @@
       },
       "homeoffice": {
         "title": "Homeoffice-Erkennung",
-        "description": "Wähle die Home-Zone und den device_tracker für die Homeoffice-Erkennung.",
+        "description": "Wähle deine Home-Zone und das Gerät aus der Home-Assistant-Geräteliste, mit dem Homeoffice erkannt werden soll.",
         "data": {
           "home_zone": "Home-Zone für Homeoffice",
-          "homeoffice_device": "Homeoffice-Gerät (device_tracker)",
+          "homeoffice_device": "Gerät für die Homeoffice-Erkennung",
           "work_signal": "Bisheriger Homeoffice-Sensor (ältere Einrichtung)"
         }
       },
@@ -74,7 +74,7 @@
     "error": {
       "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
       "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung oder deaktiviere Homeoffice.",
-      "homeoffice_device_required": "Wähle einen device_tracker oder deaktiviere Homeoffice.",
+      "homeoffice_device_required": "Wähle ein Gerät für die Homeoffice-Erkennung aus oder deaktiviere die Homeoffice-Erkennung.",
       "office_zone_required": "Wähle die Arbeitszone (Standort der Arbeit).",
       "work_calendar_required": "Wähle einen Arbeitskalender oder deaktiviere die Arbeitskalender-Option.",
       "user_already_configured": "Diese ältere HA-Benutzerzuordnung ist bereits einer anderen Person zugewiesen."
