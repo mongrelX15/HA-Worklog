@@ -9,6 +9,7 @@ from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.event import (
     async_track_state_change_event,
@@ -85,7 +86,7 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
                 ) from err
             try:
                 user = await hass.auth.async_get_user(changed_by)
-            except (AttributeError, ValueError):
+            except (AttributeError, ValueError, HomeAssistantError):
                 user = None
             await coordinator.async_set_day_override(
                 day,
