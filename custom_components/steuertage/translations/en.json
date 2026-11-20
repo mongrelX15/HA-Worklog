@@ -3,11 +3,16 @@
     "step": {
       "user": {
         "title": "Set up Steuertage",
-        "description": "First choose the person, work location and threshold. The work location means the place you travel to for work, whose visits may be relevant to your commute-distance records. More settings are available on the next page, where you can configure optional features or skip them.",
+        "description": "Set up everything in this dialog. The work location is where you travel for work. The threshold is the minimum time spent in the work zone or, when enabled, the home zone before a day is counted automatically (default: 2 hours). Homeoffice and work calendar are optional; their extra selectors are also optional unless the corresponding feature is enabled.",
         "data": {
           "person_entity": "Person",
           "office_zone": "Work location (zone)",
-          "threshold_hours": "Minimum duration per signal (hours; default 2)"
+          "threshold_hours": "Minimum time before a day counts (hours; default 2)",
+          "homeoffice_enabled": "Use Homeoffice detection",
+          "home_zone": "Home zone (optional; required when Homeoffice detection is enabled)",
+          "homeoffice_device": "Homeoffice device (optional; required when Homeoffice detection is enabled)",
+          "work_calendar_enabled": "Use a work calendar",
+          "work_calendar": "Work calendar (optional; required when enabled)"
         }
       },
       "features": {
@@ -68,10 +73,15 @@
     "step": {
       "init": {
         "title": "Steuertage settings",
-        "description": "Adjust the person, work location and threshold. The work location means the place you travel to for work, whose visits may be relevant to your commute-distance records. Afterwards, configure, change or disable optional features.",
+        "description": "Adjust all settings in one dialog. The work location is where you travel for work. The threshold is the minimum time spent in the work zone or, when enabled, the home zone before a day is counted automatically (default: 2 hours). Homeoffice and work calendar are optional; their extra selectors are also optional unless the corresponding feature is enabled.",
         "data": {
           "office_zone": "Work location (zone)",
-          "threshold_hours": "Minimum duration per signal (hours; default 2)"
+          "threshold_hours": "Minimum time before a day counts (hours; default 2)",
+          "homeoffice_enabled": "Use Homeoffice detection",
+          "home_zone": "Home zone (optional; required when Homeoffice detection is enabled)",
+          "homeoffice_device": "Homeoffice device (optional; required when Homeoffice detection is enabled)",
+          "work_calendar_enabled": "Use a work calendar",
+          "work_calendar": "Work calendar (optional; required when enabled)"
         }
       },
       "manage": {
