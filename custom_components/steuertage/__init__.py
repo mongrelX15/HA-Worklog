@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,8 @@ PANEL_PATH = "steuertage"
 PANEL_ASSET = Path(__file__).parent / "www" / "steuertage_panel.js"
 PANEL_MODULE = f"/steuertage_static/steuertage_panel.js?v={hashlib.sha256(PANEL_ASSET.read_bytes()).hexdigest()[:16]}"
 PANEL_STATIC_URL = "/steuertage_static"
+PANEL_BRAND_URL = "/steuertage_brand"
+PANEL_VERSION = json.loads((Path(__file__).parent / "manifest.json").read_text())["version"]
 PANEL_SERVICE = "set_day_override"
 MANUAL_DAY_TYPES = set(DAY_TYPES) | {"automatic"}
 
@@ -47,6 +50,11 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
                 StaticPathConfig(
                     PANEL_STATIC_URL,
                     str(Path(__file__).parent / "www"),
+                    cache_headers=True,
+                ),
+                StaticPathConfig(
+                    PANEL_BRAND_URL,
+                    str(Path(__file__).parent / "brand"),
                     cache_headers=True,
                 )
             ]
@@ -155,7 +163,7 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
         sidebar_title="Steuertage",
         sidebar_icon="mdi:calendar-check",
         module_url=PANEL_MODULE,
-        config={},
+        config={"version": PANEL_VERSION},
     )
 
     if not hass.services.has_service(DOMAIN, PANEL_SERVICE):
