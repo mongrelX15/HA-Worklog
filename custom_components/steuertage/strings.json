@@ -12,13 +12,14 @@
       },
       "features": {
         "title": "Optionale Funktionen",
-        "description": "Wähle eine Funktion aus, um sie einzurichten. Du kannst danach weitere Funktionen einrichten oder die Einrichtung abschließen.",
+        "description": "Wähle eine Funktion aus, um sie einzurichten, oder gehe zurück zu den Grundangaben. Danach kannst du weitere Funktionen einrichten oder die Einrichtung abschließen.",
         "menu_options": {
           "homeoffice": "Homeoffice-Erkennung einrichten",
           "work_calendar": "Arbeitskalender einrichten",
           "finish": "Ohne weitere Funktionen abschließen",
           "disable_homeoffice": "Homeoffice-Erkennung entfernen",
-          "disable_work_calendar": "Arbeitskalender entfernen"
+          "disable_work_calendar": "Arbeitskalender entfernen",
+          "basics": "Zurück zu den Grundangaben"
         }
       },
       "homeoffice": {
@@ -39,6 +40,15 @@
       },
       "finish": {
         "title": "Einrichtung abschließen"
+      },
+      "basics": {
+        "title": "Grundangaben",
+        "description": "Ändere Person, Arbeitsstätte oder Schwellwert und fahre danach mit den optionalen Funktionen fort.",
+        "data": {
+          "person_entity": "Person",
+          "office_zone": "Arbeitsstätte (Zone)",
+          "threshold_hours": "Mindestdauer pro Signal (Stunden; Standard 2)"
+        }
       }
     },
     "error": {
