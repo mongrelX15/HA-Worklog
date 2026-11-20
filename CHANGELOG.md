@@ -1,5 +1,9 @@
 # Änderungsprotokoll
 
+## Noch nicht veröffentlicht
+
+- Kalender: Bei mehreren ausgewählten Tagen zeigt die Bearbeitungsüberschrift jetzt den gesamten Zeitraum, zum Beispiel „12.11.2026 bis 16.11.2026“.
+
 ## 0.2.0-beta.12
 
 - Konfigurationsübersicht: Angaben kompakter und gleichmäßiger anordnen.
