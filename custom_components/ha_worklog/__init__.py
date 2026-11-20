@@ -28,7 +28,7 @@ from .coordinator import DAY_TYPES, WorklogCoordinator
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
 PANEL_PATH = "ha-worklog"
-PANEL_MODULE = "/ha_worklog_static/ha_worklog_panel.js?v=0.1.0-beta.9"
+PANEL_MODULE = "/ha_worklog_static/ha_worklog_panel.js?v=0.1.0-beta.10"
 PANEL_STATIC_URL = "/ha_worklog_static"
 PANEL_SERVICE = "set_day_override"
 MANUAL_DAY_TYPES = set(DAY_TYPES) | {"automatic"}
