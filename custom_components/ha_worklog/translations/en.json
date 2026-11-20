@@ -2,29 +2,43 @@
   "config": {
     "step": {
       "user": {
-        "title": "HA Work-Log einrichten",
-        "description": "Wähle deine Person, den Homeoffice-Sensor und optional die Arbeitszone. Ein Tag zählt in der Beta, wenn mindestens eines der beiden Signale 30 Minuten erreicht.",
+        "title": "Set up HA Work-Log",
+        "description": "Set up one person. A workday counts when the office zone or home-office detection is active for at least 30 minutes.",
         "data": {
           "person_entity": "Person",
-          "work_signal": "Homeoffice-Sensor",
-          "office_zone": "Arbeitszone (optional)"
+          "home_zone": "Home zone",
+          "homeoffice_device": "Home-office device (device_tracker)",
+          "office_zone": "Office zone (optional)",
+          "ha_user_id": "HA user for the default calendar (optional)"
         }
       }
     },
+    "error": {
+      "already_configured": "A Work-Log is already set up for this person.",
+      "device_already_configured": "This home-office device is already assigned to another person.",
+      "user_already_configured": "This HA user is already assigned as the default calendar for another person."
+    },
     "abort": {
-      "already_configured": "Für diese Person ist bereits ein Work-Log eingerichtet."
+      "already_configured": "A Work-Log is already set up for this person."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "HA Work-Log Einstellungen",
+        "title": "HA Work-Log settings",
+        "description": "Adjust person detection. Older Beta 7 entries can temporarily keep using the previous home-office sensor.",
         "data": {
-          "person_entity": "Person",
-          "work_signal": "Homeoffice-Sensor",
-          "office_zone": "Arbeitszone (optional)"
+          "home_zone": "Home zone",
+          "homeoffice_device": "Home-office device (device_tracker; leave empty for the previous Beta 7 detection)",
+          "office_zone": "Office zone (optional)",
+          "ha_user_id": "HA user for the default calendar (optional)",
+          "work_signal": "Previous home-office sensor (Beta 7)"
         }
       }
+    },
+    "error": {
+      "device_already_configured": "This home-office device is already assigned to another person.",
+      "user_already_configured": "This HA user is already assigned as the default calendar for another person."
     }
   }
 }
