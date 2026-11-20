@@ -8,6 +8,7 @@ from homeassistant import config_entries
 from homeassistant.helpers import selector
 from homeassistant.helpers.selector import SelectSelectorMode
 
+from .logic import find_person_configuration_conflicts
 from .const import (
     CONF_DEVICE_TRACKER,
     CONF_HA_USER_ID,
@@ -99,22 +100,18 @@ def _find_conflicts(
     exclude_entry_id: str | None = None,
 ) -> set[str]:
     """Prevent ambiguous person, tracker, and default-user assignments."""
-    errors: set[str] = set()
-    person = values.get(CONF_PERSON)
-    tracker = values.get(CONF_DEVICE_TRACKER)
-    user_id = values.get(CONF_HA_USER_ID) or None
-
-    for entry in hass.config_entries.async_entries(DOMAIN):
-        if entry.entry_id == exclude_entry_id:
-            continue
-        current = _configuration(entry)
-        if person and current.get(CONF_PERSON) == person:
-            errors.add("already_configured")
-        if tracker and current.get(CONF_DEVICE_TRACKER) == tracker:
-            errors.add("device_already_configured")
-        if user_id and current.get(CONF_HA_USER_ID) == user_id:
-            errors.add("user_already_configured")
-    return errors
+    configurations = [
+        {
+            "entry_id": entry.entry_id,
+            "values": _configuration(entry),
+        }
+        for entry in hass.config_entries.async_entries(DOMAIN)
+    ]
+    return find_person_configuration_conflicts(
+        values,
+        configurations,
+        exclude_entry_id=exclude_entry_id,
+    )
 
 
 class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
