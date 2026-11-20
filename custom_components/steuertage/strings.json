@@ -14,12 +14,12 @@
       }
     },
     "error": {
-      "already_configured": "Für diese Person ist bereits ein Work-Log eingerichtet.",
+      "already_configured": "Für diese Person ist bereits ein Steuertage eingerichtet.",
       "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
       "user_already_configured": "Dieser HA-Benutzer ist bereits einer anderen Person als Standardansicht zugeordnet."
     },
     "abort": {
-      "already_configured": "Für diese Person ist bereits ein Work-Log eingerichtet."
+      "already_configured": "Für diese Person ist bereits ein Steuertage eingerichtet."
     }
   },
   "options": {
