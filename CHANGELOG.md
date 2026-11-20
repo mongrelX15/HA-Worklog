@@ -2,6 +2,12 @@
 
 ## Noch nicht veröffentlicht
 
+- Tastenkürzel: Großbuchstaben funktionieren auch mit gedrückter Umschalttaste; Ziffer 0 wird über Haupttastenreihe und Ziffernblock erkannt. Weitere Kürzel während eines Speichervorgangs werden nacheinander verarbeitet.
+- Tastenkürzel: Escape hebt die Auswahl inklusive sichtbarer Zeitraum-Umrandung auf.
+- Kalender: Ziehen im Mehrfachauswahl-Modus markiert oder entfernt den gesamten Bereich zwischen Start- und Zieltag.
+- Legende: automatische Erkennung und „Erkennung läuft“ verwenden den lila Kalenderfarbton.
+- Infofenster: Das Symbol sitzt oben rechts im allgemeinen App-Kopf und ist von allen Tabs erreichbar.
+- Datenmigration: ältere Krankheits- und Urlaubseinträge bleiben manuell und werden beim Zurücksetzen nicht als automatische Erkennung übernommen.
 - Kalender: Esc löscht auch den gespeicherten Auswahlzeitraum, damit nach dem Leeren keine Tagesumrandungen stehen bleiben.
 - Kalender: Ziehen im Mehrfachauswahl-Modus markiert oder entfernt wieder den vollständigen Datumsbereich zwischen Start- und Zieltag.
 - Infofenster: Das Symbol sitzt jetzt oben rechts im allgemeinen App-Kopf und ist von allen Tabs aus erreichbar.
