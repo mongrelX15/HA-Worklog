@@ -127,6 +127,7 @@ def normalize_day_record(
         "office_seconds": round(office_seconds),
         "homeoffice_seconds": round(homeoffice_seconds),
         "change_history": [item for item in change_history if isinstance(item, dict)],
+        "updated_at": record.get("updated_at") if isinstance(record.get("updated_at"), str) else None,
     }
 
 

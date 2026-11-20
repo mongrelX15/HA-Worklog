@@ -234,9 +234,9 @@ class SteuertagePanel extends HTMLElement {
 
   _type(event) {
     const summary = (event?.summary || "").toLowerCase();
-    if (summary.includes("büro- und")) return "office_and_home_office";
+    if (summary.includes("büro- und") || summary.includes("arbeit vor ort + homeoffice")) return "office_and_home_office";
     if (summary.includes("homeoffice")) return "home_office";
-    if (summary.includes("bürotag")) return "office";
+    if (summary.includes("bürotag") || summary.includes("arbeit vor ort")) return "office";
     if (summary.includes("urlaub")) return "vacation";
     if (summary.includes("krankheit")) return "sick_leave";
     if (summary.includes("prüfen")) return "needs_review";
@@ -245,13 +245,19 @@ class SteuertagePanel extends HTMLElement {
     return "";
   }
 
+  _formatDate(value, options = { dateStyle: "medium" }) {
+    if (!value) return "";
+    const date = new Date(value.slice(0, 10) + "T12:00:00");
+    return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(this._hass?.locale?.language || "de-DE", options).format(date);
+  }
+
   _label(type) {
     return ({
       no_work: "Kein Arbeitstag",
       tracking: "Erkennung läuft",
       home_office: "Homeoffice-Tag",
-      office: "Bürotag",
-      office_and_home_office: "Büro- und Homeoffice-Signale",
+      office: "Arbeit vor Ort",
+      office_and_home_office: "Arbeit vor Ort + Homeoffice",
       needs_review: "Bitte prüfen",
       vacation: "Urlaub",
       sick_leave: "Krankheit",
@@ -329,7 +335,7 @@ class SteuertagePanel extends HTMLElement {
       check(a.worklog_home_zone_entity, "Home-Zone");
       check(a.worklog_device_tracker || a.worklog_legacy_signal, "Homeoffice-Signal");
     }
-    if (a.worklog_office_zone_entity) check(a.worklog_office_zone_entity, "Büro-Zone");
+    if (a.worklog_office_zone_entity) check(a.worklog_office_zone_entity, "Arbeitszone (Standort der Arbeit)");
     if (a.worklog_work_calendar_entity) {
       check(a.worklog_work_calendar_entity, "Arbeitskalender");
       const selected = this._hass.states[a.worklog_work_calendar_entity];
@@ -441,10 +447,10 @@ class SteuertagePanel extends HTMLElement {
     const openItems = (rows || []).filter((row) => row.type === "needs_review" || row.type === "tracking");
     const checklist = rows === null ? "<p>Prüfliste wird geladen …</p>" : openItems.length
       ? "<ul class='checklist'>" + openItems.map((row) => "<li><button class='text-button' data-review-date='" + row.date + "'>" +
-        row.date + " · " + this._escape(row.type === "needs_review" ? "Bitte prüfen" : "Erkennung läuft") + "</button></li>").join("") + "</ul>"
+        this._formatDate(row.date) + " · " + this._escape(row.type === "needs_review" ? "Bitte prüfen" : "Erkennung läuft") + "</button></li>").join("") + "</ul>"
       : "<p class='validation ok'>Keine offenen Hinweise zur Prüfung in diesem Zeitraum.</p>";
     const monthly = rows === null ? [] : this._monthlySummary(rows);
-    const monthlyHead = "<th>Monat</th><th>Büro</th>" + (homeofficeEnabled ? "<th>Homeoffice</th><th>Büro + Homeoffice</th>" : "") +
+    const monthlyHead = "<th>Monat</th><th>Arbeit vor Ort</th>" + (homeofficeEnabled ? "<th>Homeoffice</th><th>Arbeit vor Ort + Homeoffice</th>" : "") +
       "<th>Krank</th><th>Urlaub</th><th>Arbeitstage</th>";
     const monthlyRows = monthly.map((m) => "<tr><td>" + m.month + "</td><td>" + m.office + "</td>" +
       (homeofficeEnabled ? "<td>" + m.home_office + "</td><td>" + m.office_and_home_office + "</td>" : "") +
@@ -455,27 +461,31 @@ class SteuertagePanel extends HTMLElement {
     let table = "<p>Lade gespeicherte Tage …</p>";
     if (rows !== null) table = rows.length ? "<div class='table-wrap'><table><thead><tr><th>Datum</th><th>Erkannter Typ</th><th>Hinweis</th></tr></thead><tbody>" +
       rows.map((r) => "<tr class='" + (r.type === "needs_review" ? "needs-review" : r.type === "tracking" ? "tracking-row" : "") +
-      "'><td>" + r.date + "</td><td>" + this._escape(r.label) + (r.manual ? " <span class='manual-tag'>Manuell geändert</span>" : "") +
+      "'><td>" + this._formatDate(r.date) + "</td><td>" + this._escape(r.label) + (r.manual ? " <span class='manual-tag'>Manuell geändert</span>" : "") +
       "</td><td>" + (r.type === "needs_review" ? "<button class='text-button' data-review-date='" + r.date + "'>Bitte im Kalender prüfen</button>" :
       r.type === "tracking" ? "Erkennung noch nicht abgeschlossen" : "—") + "</td></tr>").join("") + "</tbody></table></div>" :
       "<p>Für den gewählten Zeitraum gibt es keine gespeicherten Tage.</p>";
     const disabled = rows === null ? "disabled" : "";
-    return "<ha-card><h2>Export</h2><div class='export-controls'>" + person +
-      "<label>Jahr <input data-export-year type='number' min='2000' max='2100' value='" + this._exportYear + "'></label>" +
+    return "<ha-card><h2>Export</h2>" +
+      "<section class='info-card export-check " + (openItems.length ? "has-issues" : "all-clear") + "'><h3>Vor dem Export prüfen</h3>" + checklist + (rows === null ? "" : "<p class='muted'>" + counts.manual + " manuell geänderte Tage im Zeitraum.</p>") + "</section>" +
+      "<div class='export-controls'>" + person +
+      "<div class='preset-row'>" +
+      [this._exportYear, this._exportYear - 1, this._exportYear - 2].map((year) => "<button class='export-button' data-period='year' data-year='" + year + "'>Steuerjahr " + year + "</button>").join("") +
+      "<button class='export-button' data-period='month'>Dieser Monat</button><button class='export-button' data-period='week'>Diese Woche</button></div>" +
       "<label>Von <input data-export-from type='date' value='" + this._exportFrom + "'></label>" +
       "<label>Bis <input data-export-to type='date' value='" + this._exportTo + "'></label>" +
       "<button class='export-button' data-download='csv' " + disabled + ">CSV herunterladen</button>" +
       "<button class='export-button' data-download='txt' " + disabled + ">TXT herunterladen</button>" +
       "<button class='export-button' data-download='html' " + disabled + ">HTML herunterladen</button></div>" +
-      "<p class='muted'>" + (homeofficeEnabled ? "„Büro + Homeoffice“ zählt als eigene Kategorie und als ein Arbeitstag. " : "") + "Nur durch diese App erfasste Tage können in der Auswertung berücksichtigt werden.</p>" +
+      "<p class='muted'>" + (homeofficeEnabled ? "„Arbeit vor Ort + Homeoffice“ zählt als eigene Kategorie und als ein Arbeitstag. " : "") + "Nur durch diese App erfasste Tage können in der Auswertung berücksichtigt werden.</p>" +
       "<p class='disclaimer'>Steuertage unterstützt lediglich die automatische Erfassung relevanter Daten auf Grundlage der in Home Assistant vorhandenen Erkennung. Für Richtigkeit und Vollständigkeit Ihrer Steuererklärung tragen Sie die volle Verantwortung. Alle Angaben ohne Gewähr.</p>" +
-      "<section class='info-card'><h3>Vor dem Export prüfen</h3>" + checklist + (rows === null ? "" : "<p class='muted'>" + counts.manual + " manuell geänderte Tage im Zeitraum.</p>") + "</section>" +
-      (rows === null ? table : "<div class='stats export-stats'>" + stat("Bürotage",counts.office) +
-      (homeofficeEnabled ? stat("Homeoffice-Tage",counts.home_office) + stat("Büro + Homeoffice",counts.office_and_home_office) : "") +
+      (rows === null ? table : "<div class='stats export-stats'>" + stat("Tage mit Arbeit vor Ort",counts.office) +
+      (homeofficeEnabled ? stat("Homeoffice-Tage",counts.home_office) + stat("Arbeit vor Ort + Homeoffice",counts.office_and_home_office) : "") +
       stat("Krankheitstage",counts.sick_leave) + stat("Urlaubstage",counts.vacation) +
       stat("Arbeitstage gesamt",counts.workdays) + stat("Bitte prüfen",counts.needs_review) + stat("Erkennung läuft",counts.tracking) + "</div>" +
       "<h3>Monatsübersicht</h3>" + monthlyTable + "<h3>Tagesliste</h3>" + table) +
-      "<section class='info-card'><h3>Verlauf sichern oder wiederherstellen</h3><p>Die Sicherung enthält den Verlauf der ausgewählten Person. Beim Wiederherstellen werden nur Datumswerte ergänzt, die noch fehlen; vorhandene Tage bleiben erhalten. Dafür ist ein Home-Assistant-Administrator erforderlich.</p>" +
+      "<section class='info-card'><h3>Verlauf sichern oder wiederherstellen</h3><p>Die Sicherung enthält den Verlauf der ausgewählten Person. „Ergänzen“ fügt fehlende Tage hinzu und behält lokale Änderungen, die nach dem Sicherungsstand vorgenommen wurden. „Ersetzen“ übernimmt die gesicherten Einträge für alle darin enthaltenen Tage. Tage, die nicht in der Sicherung stehen, bleiben unverändert. Dafür ist ein Home-Assistant-Administrator erforderlich.</p>" +
+      "<label>Wiederherstellungsart <select data-restore-strategy><option value='merge_newer'>Ergänzen und neuere lokale Änderungen behalten</option><option value='replace'>Tage aus Sicherung ersetzen</option></select></label><br>" +
       "<button class='export-button' data-backup " + (rows === null || !calendars.length ? "disabled" : "") + ">Sicherung herunterladen</button> " +
       "<button class='export-button' data-restore " + (!calendars.length ? "disabled" : "") + ">Sicherung einlesen</button>" +
       "<input data-restore-file type='file' accept='application/json,.json' hidden></section></ha-card>";
@@ -534,13 +544,17 @@ class SteuertagePanel extends HTMLElement {
       }
       const recordCount = Object.keys(backup.records).length;
       if (recordCount > 20000) throw new Error("Die Sicherung enthält zu viele Datensätze.");
-      if (!window.confirm(recordCount + " gesicherte Tage einlesen? Bereits vorhandene Tage werden beibehalten.")) return;
+      const strategy = this.shadowRoot.querySelector("[data-restore-strategy]")?.value || "merge_newer";
+      const explanation = strategy === "replace" ? "Vorhandene Einträge der gesicherten Tage werden ersetzt." :
+        "Fehlende Tage werden ergänzt; lokale Änderungen nach dem Sicherungszeitpunkt bleiben erhalten.";
+      if (!window.confirm(recordCount + " gesicherte Tage einlesen? " + explanation + " Nicht gesicherte Tage bleiben unverändert.")) return;
       const result = await this._hass.connection.sendMessagePromise({
         type: "steuertage/restore_history", person_entity: selected, records: backup.records,
+        strategy, created_at: backup.created_at || "",
       });
       this._exportKey = ""; this._exportEvents = null;
       await this._loadExportEvents();
-      this._showMessage(result.imported + " Tage ergänzt, " + result.skipped + " vorhandene übersprungen, " + result.invalid + " ungültige verworfen.");
+      this._showMessage(result.imported + " ergänzt, " + result.replaced + " ersetzt, " + result.preserved_newer + " neuere lokale Einträge behalten, " + result.invalid + " ungültige verworfen.");
     } catch (error) { this._showMessage(error?.message || "Die Sicherung konnte nicht eingelesen werden."); }
   }
 
@@ -550,14 +564,14 @@ class SteuertagePanel extends HTMLElement {
     const rows = this._exportRows();
     const c = this._countsForRows(rows);
     const headers = ["Datum","Tagestyp","Manuell geändert","Hinweis"];
-    const values = rows.map((r) => [r.date,r.label,r.manual?"Ja":"Nein",r.type==="needs_review"?"Bitte im Kalender prüfen":r.type==="tracking"?"Erkennung noch nicht abgeschlossen":""]);
+    const values = rows.map((r) => [this._formatDate(r.date),r.label,r.manual?"Ja":"Nein",r.type==="needs_review"?"Bitte im Kalender prüfen":r.type==="tracking"?"Erkennung noch nicht abgeschlossen":""]);
     const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (x) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[x]));
-    const period = this._exportFrom + " bis " + this._exportTo;
-    const summary = [["Bürotage",c.office]];
-    if (homeofficeEnabled) summary.push(["Homeoffice-Tage",c.home_office],["Büro + Homeoffice",c.office_and_home_office]);
+    const period = this._formatDate(this._exportFrom) + " bis " + this._formatDate(this._exportTo);
+    const summary = [["Tage mit Arbeit vor Ort",c.office]];
+    if (homeofficeEnabled) summary.push(["Homeoffice-Tage",c.home_office],["Arbeit vor Ort + Homeoffice",c.office_and_home_office]);
     summary.push(["Krankheitstage",c.sick_leave],["Urlaubstage",c.vacation],["Arbeitstage gesamt",c.workdays],["Bitte prüfen",c.needs_review],["Erkennung läuft",c.tracking]);
-    const monthHead = ["Monat","Büro",...(homeofficeEnabled ? ["Homeoffice","Büro + Homeoffice"] : []),"Krank","Urlaub","Arbeitstage"];
-    const monthValues = (m) => [m.month,m.office,...(homeofficeEnabled ? [m.home_office,m.office_and_home_office] : []),m.sick_leave,m.vacation,m.workdays];
+    const monthHead = ["Monat","Arbeit vor Ort",...(homeofficeEnabled ? ["Homeoffice","Arbeit vor Ort + Homeoffice"] : []),"Krank","Urlaub","Arbeitstage"];
+    const monthValues = (m) => [this._formatDate(m.month + "-01", { month: "long", year: "numeric" }),m.office,...(homeofficeEnabled ? [m.home_office,m.office_and_home_office] : []),m.sick_leave,m.vacation,m.workdays];
     const disclaimer = "Steuertage unterstützt lediglich die automatische Erfassung relevanter Daten auf Grundlage der in Home Assistant vorhandenen Erkennung. Für Richtigkeit und Vollständigkeit Ihrer Steuererklärung tragen Sie die volle Verantwortung. Alle Angaben ohne Gewähr.";
     const notice = "Nur durch diese App erfasste Tage können in der Auswertung berücksichtigt werden.";
     let content, mime = "text/plain;charset=utf-8";
@@ -570,16 +584,16 @@ class SteuertagePanel extends HTMLElement {
         summary.map((x) => "<li>" + esc(x[0]) + ": " + x[1] + "</li>").join("") + "</ul><h2>Monatsübersicht</h2><table><thead><tr>" +
         monthHead.map((x) => "<th>" + esc(x) + "</th>").join("") + "</tr></thead><tbody>" +
         monthly.map((m) => "<tr>" + monthValues(m).map((v) => "<td>"+esc(v)+"</td>").join("") + "</tr>").join("") +
-        "</tbody></table><h2>Prüfliste</h2>" + rows.filter((r) => r.type === "needs_review" || r.type === "tracking").map((r) => "<p>"+esc(r.date)+" · "+esc(r.label)+"</p>").join("") +
+        "</tbody></table><h2>Prüfliste</h2>" + rows.filter((r) => r.type === "needs_review" || r.type === "tracking").map((r) => "<p>"+esc(this._formatDate(r.date))+" · "+esc(r.label)+"</p>").join("") +
         "<h2>Tagesliste</h2><table><thead><tr>" + headers.map((x) => "<th>" + esc(x) + "</th>").join("") + "</tr></thead><tbody>" + rows.map((r) => "<tr class='" +
-        (r.type === "needs_review" || r.type === "tracking" ? "notice" : "") + "'><td>" + esc(r.date) + "</td><td>" + esc(r.label) +
+        (r.type === "needs_review" || r.type === "tracking" ? "notice" : "") + "'><td>" + esc(this._formatDate(r.date)) + "</td><td>" + esc(r.label) +
         "</td><td>" + (r.manual?"Ja":"Nein") + "</td><td>" + esc(r.type === "needs_review"?"Bitte im Kalender prüfen":r.type === "tracking"?"Erkennung noch nicht abgeschlossen":"") +
         "</td></tr>").join("") + "</tbody></table><p>"+notice+"</p><p>"+disclaimer+"</p></html>";
       mime = "text/html;charset=utf-8";
     } else {
       content = "Steuertage " + period + " – " + person + "\n\n" + summary.map((x) => x[0] + ": " + x[1]).join("\n") +
         "\n\nMonatsübersicht\n" + this._monthlySummary(rows).map((m) => monthValues(m).join(" | ")).join("\n") +
-        "\n\nPrüfliste\n" + rows.filter((r) => r.type === "needs_review" || r.type === "tracking").map((r) => r.date + " · " + r.label).join("\n") +
+        "\n\nPrüfliste\n" + rows.filter((r) => r.type === "needs_review" || r.type === "tracking").map((r) => this._formatDate(r.date) + " · " + r.label).join("\n") +
         "\n\n" + headers.join(" | ") + "\n" + values.map((r) => r.join(" | ")).join("\n") +
         "\n\n" + notice + "\n\n" + disclaimer;
     }
@@ -597,7 +611,7 @@ class SteuertagePanel extends HTMLElement {
     const homeOfficeEnabled = this._homeOfficeEnabled();
     const monthStatItems = [
       { label: "Arbeitstage", value: monthStats.workdays },
-      { label: "Büro", value: monthStats.office },
+      { label: "Arbeit vor Ort", value: monthStats.office },
       ...(homeOfficeEnabled ? [{ label: "Homeoffice", value: monthStats.homeOffice }] : []),
       { label: "Urlaub", value: monthStats.vacation },
       { label: "Krankheit", value: monthStats.sick },
@@ -621,8 +635,8 @@ class SteuertagePanel extends HTMLElement {
       const type = this._type(event);
       const isWeekend = d.getDay() === 0 || d.getDay() === 6;
       const manuallyChanged = (event?.description || "").includes("Manuell geändert");
-      const cls = ["day", isWeekend ? "weekend" : "", type ? "type-" + type : "", manuallyChanged ? "manual" : "", d.getMonth() !== this._month.getMonth() ? "outside" : "", iso === this._selected ? "selected" : ""].filter(Boolean).join(" ");
-      cells += "<button class='" + cls + "' data-date='" + iso + "' aria-label='" + iso + (event ? ": " + this._label(type) : "") + (manuallyChanged ? ", manuell geändert" : "") + "'>" + d.getDate() + "</button>";
+      const cls = ["day", isWeekend ? "weekend" : "", type ? "type-" + type : "", manuallyChanged ? "manual" : "", d.getMonth() !== this._month.getMonth() ? "outside" : "", iso === this._selected ? "selected" : "", this._correctionFrom && this._correctionTo && iso >= this._correctionFrom && iso <= this._correctionTo ? "range-selected" : ""].filter(Boolean).join(" ");
+      cells += "<button class='" + cls + "' data-date='" + iso + "' aria-label='" + this._formatDate(iso) + (event ? ": " + this._label(type) : "") + (manuallyChanged ? ", manuell geändert" : "") + "'>" + d.getDate() + "</button>";
     }
     const states = Object.values(this._hass.states || {});
     const sensorLines = states.filter((item) => item.entity_id.startsWith("sensor.") &&
@@ -648,9 +662,9 @@ class SteuertagePanel extends HTMLElement {
       : "";
     const tab = this._tab;
     const content = tab === "calendar"
-      ? (this._calendarEntity() ? "<ha-card>" + calendarTabs + "<div class='calendar-head'><button class='month-nav' data-action='prev' aria-label='Vorheriger Monat'>‹</button><h2>" + title + "</h2><button class='today-nav' data-action='today' aria-label='Zum heutigen Datum springen'>Heute</button><button class='month-nav' data-action='next' aria-label='Nächster Monat'>›</button></div><div class='stats'>" + monthStatItems.map((item) => "<div class='stat'><span>" + item.label + "</span><strong>" + item.value + "</strong></div>").join("") + "</div><div class='grid'>" + headers + cells + "</div><div class='legend'><span><i class='legend-dot office-dot'></i>Büro</span>"+(homeOfficeEnabled ? "<span><i class='legend-dot home-dot'></i>Homeoffice</span>" : "")+"<span><i class='legend-dot vacation-dot'></i>Urlaub</span><span><i class='legend-dot sick-dot'></i>Krankheit</span><span><i class='legend-dot tracking-dot'></i>Erkennung läuft</span><span><i class='legend-dot no-work-dot'></i>Kein Arbeitstag</span><span><i class='legend-dot manual-dot'></i>Manuell geändert</span></div>" + (this._selected ? "<div class='selection'><h3>" + this._selected + "</h3><p>" + this._label(selectedType) + (selectedEvent?.description?.includes('Manuell geändert') ? " · manuell geändert" : "") + "</p><div class='date-range'><label>Von<input data-correction-from type='date' value='" + (this._correctionFrom || this._selected) + "'></label><label>Bis<input data-correction-to type='date' value='" + (this._correctionTo || this._selected) + "'></label></div><p class='muted'>Wähle einen Tag oder Zeitraum. Die Änderung wird auf alle Tage angewendet.</p><div class='actions'><button data-type='office'>Bürotag</button>"+(homeOfficeEnabled ? "<button data-type='home_office'>Homeoffice</button>" : "")+"<button data-type='no_work'>Kein Arbeitstag</button><button data-type='vacation'>Urlaub</button><button data-type='sick_leave'>Krankheit</button><button data-type='automatic'>Automatisch</button></div>" + selectedHistoryMarkup + "<p class='message'>" + this._message + "</p></div>" : "") + "</ha-card>" : calendars.length > 1 ? "<ha-card>" + calendarTabs + "<p>Bitte wähle eine Person aus, um den Kalender zu öffnen.</p></ha-card>" : "<ha-card><p>Es ist noch keine Person für Steuertage eingerichtet.</p></ha-card>")
+      ? (this._calendarEntity() ? "<ha-card>" + calendarTabs + "<div class='calendar-head'><button class='month-nav' data-action='prev' aria-label='Vorheriger Monat'>‹</button><h2>" + title + "</h2><button class='today-nav' data-action='today' aria-label='Zum heutigen Datum springen'>Heute</button><button class='month-nav' data-action='next' aria-label='Nächster Monat'>›</button></div><div class='stats'>" + monthStatItems.map((item) => "<div class='stat'><span>" + item.label + "</span><strong>" + item.value + "</strong></div>").join("") + "</div><div class='grid'>" + headers + cells + "</div><div class='legend'><span><i class='legend-dot office-dot'></i>Arbeit vor Ort</span>"+(homeOfficeEnabled ? "<span><i class='legend-dot home-dot'></i>Homeoffice</span>" : "")+"<span><i class='legend-dot vacation-dot'></i>Urlaub</span><span><i class='legend-dot sick-dot'></i>Krankheit</span><span><i class='legend-dot tracking-dot'></i>Erkennung läuft</span><span><i class='legend-dot no-work-dot'></i>Kein Arbeitstag</span><span><i class='legend-dot manual-dot'></i>Manuell geändert</span></div>" + (this._selected ? "<div class='selection'><h3>" + this._formatDate(this._selected) + "</h3><p>" + this._label(selectedType) + (selectedEvent?.description?.includes('Manuell geändert') ? " · manuell geändert" : "") + "</p><div class='date-range'><label>Von<input data-correction-from type='date' value='" + (this._correctionFrom || this._selected) + "'></label><label>Bis<input data-correction-to type='date' value='" + (this._correctionTo || this._selected) + "'></label></div><p class='muted'>Wähle einen Tag oder Zeitraum. Die Änderung wird auf alle Tage angewendet.</p><div class='actions'><button class='" + (selectedType === "office" ? "selected-type" : "") + "' data-type='office'>Arbeit vor Ort</button>"+(homeOfficeEnabled ? "<button class='" + (selectedType === "home_office" ? "selected-type" : "") + "' data-type='home_office'>Homeoffice</button>" : "")+"<button class='" + (selectedType === "no_work" ? "selected-type" : "") + "' data-type='no_work'>Kein Arbeitstag</button><button class='" + (selectedType === "vacation" ? "selected-type" : "") + "' data-type='vacation'>Urlaub</button><button class='" + (selectedType === "sick_leave" ? "selected-type" : "") + "' data-type='sick_leave'>Krankheit</button><button data-type='automatic'>Automatisch</button></div>" + selectedHistoryMarkup + "<p class='message'>" + this._message + "</p></div>" : "") + "</ha-card>" : calendars.length > 1 ? "<ha-card>" + calendarTabs + "<p>Bitte wähle eine Person aus, um den Kalender zu öffnen.</p></ha-card>" : "<ha-card><p>Es ist noch keine Person für Steuertage eingerichtet.</p></ha-card>")
       : tab === "config" ? this._configMarkup(calendars) : this._exportMarkup(calendars);
-    this.shadowRoot.innerHTML = "<style>:host{display:block;color:var(--primary-text-color,CanvasText);background:var(--primary-background-color,Canvas);min-height:100vh;font-family:var(--paper-font-body1_-_font-family,Roboto,Noto,sans-serif)}.page{max-width:1050px;margin:auto;padding:24px}.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}.brand{display:grid;gap:2px}.top h1{font-size:24px;font-weight:500;margin:0}.brand p{margin:0;color:var(--secondary-text-color);font-size:14px}.tabs{display:flex;gap:8px;border-bottom:1px solid var(--divider-color);margin-bottom:20px}.tabs button,.actions button,.month-nav,.today-nav{font:inherit;color:var(--primary-text-color);background:var(--ha-card-background,var(--card-background-color,Canvas));border:1px solid var(--divider-color);border-radius:8px;padding:9px 14px;cursor:pointer}.tabs button.active{color:var(--primary-color);border-color:var(--primary-color)}ha-card{display:block;background:var(--card-background-color);color:var(--primary-text-color);border-radius:12px;padding:20px;box-shadow:var(--ha-card-box-shadow,0 2px 8px rgba(0,0,0,.12))}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.calendar-head h2{font-size:20px;font-weight:500;margin:0;text-transform:capitalize}.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:var(--secondary-text-color);font-size:13px;padding:8px 0}.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;color:var(--secondary-text-color);font-size:13px}.legend span{display:inline-flex;align-items:center;gap:6px}.legend-dot{width:11px;height:11px;border-radius:50%;display:inline-block}.office-dot{background:var(--info-color,#039be5)}.home-dot{background:var(--success-color,#43a047)}.vacation-dot{background:var(--warning-color,#fbc02d)}.sick-dot{background:var(--error-color,#db4437)}.tracking-dot{background:var(--state-icon-color,#9e9e9e)}.no-work-dot{background:var(--divider-color,#9e9e9e)}.weekday.weekend-label{color:var(--warning-color,var(--primary-color));font-weight:600}.day{position:relative;min-height:44px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);font:inherit;cursor:pointer}.day.weekend{background:var(--secondary-background-color,var(--card-background-color));border-bottom:3px solid var(--warning-color,var(--primary-color))}.day.outside{opacity:.45}.day.selected{outline:2px solid var(--primary-color)}.day.manual::after{content:'';position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--primary-text-color);opacity:.8;box-shadow:0 0 0 1px var(--card-background-color)}.manual-dot{background:var(--primary-text-color);opacity:.7}.person-tabs{display:flex;gap:8px;margin:0 0 16px;border-bottom:1px solid var(--divider-color)}.person-tab{font:inherit;color:var(--secondary-text-color);background:transparent;border:0;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer}.person-tab[aria-pressed='true']{color:var(--primary-color);border-bottom-color:var(--primary-color);font-weight:600}.config-card,.info-card{border:1px solid var(--divider-color);border-radius:10px;padding:16px;margin:14px 0}.config-title{display:flex;justify-content:space-between;align-items:center;gap:12px}.config-title h3,.info-card h3{margin:0 0 8px;font-size:17px;font-weight:500}.config-title a{color:var(--primary-color)}dl{margin:10px 0 0}.config-card dl>div{display:grid;grid-template-columns:minmax(130px,1fr) 2fr;gap:10px;padding:7px 0;border-top:1px solid var(--divider-color)}dt{color:var(--secondary-text-color)}dd{margin:0;overflow-wrap:anywhere}.info-card li{margin:8px 0}.export-controls{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin:16px 0}.export-controls label{display:grid;gap:5px;color:var(--secondary-text-color)}.export-controls input,.export-controls select,.export-button{font:inherit;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:7px;padding:9px 12px}.export-button{cursor:pointer}.export-button:disabled{opacity:.5;cursor:wait}.export-stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:16px}.muted{color:var(--secondary-text-color);font-size:13px}.disclaimer{margin-top:16px;padding:12px 14px;border-inline-start:3px solid var(--warning-color,var(--primary-color));background:var(--secondary-background-color,var(--card-background-color,Canvas));color:var(--secondary-text-color);font-size:13px;line-height:1.5}.date-range{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.date-range label{display:grid;gap:5px;color:var(--secondary-text-color)}.date-range input{font:inherit;color:var(--primary-text-color);background:var(--ha-card-background,var(--card-background-color,Canvas));border:1px solid var(--divider-color);border-radius:7px;padding:8px 10px}.validation{padding:10px 12px;border-radius:8px;margin-top:12px}.validation.ok{color:var(--success-color,var(--primary-text-color));background:var(--secondary-background-color,var(--card-background-color,Canvas))}.validation.warning{color:var(--error-color,var(--primary-text-color));background:var(--secondary-background-color,var(--card-background-color,Canvas))}.validation ul{margin-bottom:0}.checklist{padding-left:20px}.checklist li{margin:6px 0}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--divider-color)}th{color:var(--secondary-text-color);font-weight:500}.needs-review{background:var(--secondary-background-color)}.tracking-row{background:var(--secondary-background-color)}.manual-tag{display:inline-block;border-radius:10px;background:var(--secondary-background-color);padding:2px 7px;font-size:12px;color:var(--secondary-text-color)}.text-button{border:0;background:transparent;color:var(--primary-color);font:inherit;cursor:pointer;padding:0}.change-history{margin-top:12px;color:var(--secondary-text-color)}.change-history ul{padding-left:20px}.change-history time{font-variant-numeric:tabular-nums}.day.type-office,.day.type-office_and_home_office{background:var(--info-color,#039be5);color:var(--text-primary-color,#fff)}.day.type-home_office{background:var(--success-color,#43a047);color:var(--text-primary-color,#fff)}.day.type-vacation{background:var(--warning-color,#fbc02d);color:var(--primary-text-color)}.day.type-sick_leave,.day.type-needs_review{background:var(--error-color,#db4437);color:var(--text-primary-color,#fff)}.day.type-tracking{background:var(--state-icon-color,#9e9e9e)}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 16px}.stat{display:flex;flex-direction:column;gap:4px;background:var(--secondary-background-color,var(--card-background-color));border-radius:8px;padding:10px 12px}.stat span{color:var(--secondary-text-color);font-size:12px}.stat strong{font-size:20px;font-weight:500}.selection{border-top:1px solid var(--divider-color);margin-top:20px;padding-top:12px}.selection h3{font-size:17px;margin:0 0 6px}.selection p{color:var(--secondary-text-color)}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{padding:8px 10px}.message:empty{display:none}.message{min-height:1em}ha-card>h2{font-weight:500}.page li{margin:8px 0}@media(max-width:600px){.page{padding:12px}.day{min-height:38px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.export-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.config-title{align-items:flex-start;flex-direction:column}.grid{gap:3px}.tabs{overflow-x:auto}.tabs button{white-space:nowrap;padding:8px 10px}}</style><div class='page'><div class='top'><ha-menu-button></ha-menu-button><div class='brand'><h1>Steuertage</h1><p>Büro- und Homeoffice-Tage für die Steuererklärung</p></div></div><div class='tabs'><button data-tab='calendar' class='" + (tab === "calendar" ? "active" : "") + "'>Kalender</button><button data-tab='config' class='" + (tab === "config" ? "active" : "") + "'>Konfigurator</button><button data-tab='export' class='" + (tab === "export" ? "active" : "") + "'>Export</button></div>" + content + "</div>";
+    this.shadowRoot.innerHTML = "<style>:host{display:block;color:var(--primary-text-color,CanvasText);background:var(--primary-background-color,Canvas);min-height:100vh;font-family:var(--paper-font-body1_-_font-family,Roboto,Noto,sans-serif)}.page{max-width:1050px;margin:auto;padding:24px}.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}.brand{display:grid;gap:2px}.top h1{font-size:24px;font-weight:500;margin:0}.brand p{margin:0;color:var(--secondary-text-color);font-size:14px}.tabs{display:flex;gap:8px;border-bottom:1px solid var(--divider-color);margin-bottom:20px}.tabs button,.actions button,.month-nav,.today-nav{font:inherit;color:var(--primary-text-color);background:var(--ha-card-background,var(--card-background-color,Canvas));border:1px solid var(--divider-color);border-radius:8px;padding:9px 14px;cursor:pointer}.tabs button.active{color:var(--primary-color);border-color:var(--primary-color)}.actions button.selected-type{background:var(--primary-color);color:var(--text-primary-color,#fff);border-color:var(--primary-color);font-weight:600;box-shadow:0 0 0 2px var(--primary-color)}.day.range-selected{outline:2px solid var(--primary-color);outline-offset:-3px}.export-check{padding:8px 12px;margin:0 0 14px}.export-check h3{font-size:15px;margin:0 0 4px}.export-check .validation.ok{color:var(--success-color,#2e7d32);font-size:13px;margin:0}.export-check.has-issues{border:1px solid var(--error-color);background:var(--ha-card-background,var(--card-background-color))}.export-check.has-issues h3{color:var(--error-color)}.preset-row{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1}.actions button.selected-type{background:var(--primary-color);color:var(--text-primary-color,#fff);border-color:var(--primary-color);font-weight:600;box-shadow:0 0 0 2px var(--primary-color)}.day.range-selected{outline:2px solid var(--primary-color);outline-offset:-3px}.export-check{padding:8px 12px;margin:0 0 14px}.export-check h3{font-size:15px;margin:0 0 4px}.export-check .validation.ok{color:var(--success-color,#2e7d32);font-size:13px;margin:0}.preset-row{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1}ha-card{display:block;background:var(--card-background-color);color:var(--primary-text-color);border-radius:12px;padding:20px;box-shadow:var(--ha-card-box-shadow,0 2px 8px rgba(0,0,0,.12))}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.calendar-head h2{font-size:20px;font-weight:500;margin:0;text-transform:capitalize}.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:var(--secondary-text-color);font-size:13px;padding:8px 0}.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;color:var(--secondary-text-color);font-size:13px}.legend span{display:inline-flex;align-items:center;gap:6px}.legend-dot{width:11px;height:11px;border-radius:50%;display:inline-block}.office-dot{background:var(--info-color,#039be5)}.home-dot{background:var(--success-color,#43a047)}.vacation-dot{background:var(--warning-color,#fbc02d)}.sick-dot{background:var(--error-color,#db4437)}.tracking-dot{background:var(--state-icon-color,#9e9e9e)}.no-work-dot{background:var(--divider-color,#9e9e9e)}.weekday.weekend-label{color:var(--warning-color,var(--primary-color));font-weight:600}.day{position:relative;min-height:44px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);font:inherit;cursor:pointer}.day.weekend{background:var(--secondary-background-color,var(--card-background-color));border-bottom:3px solid var(--warning-color,var(--primary-color))}.day.outside{opacity:.45}.day.selected{outline:2px solid var(--primary-color)}.day.manual::after{content:'';position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--primary-text-color);opacity:.8;box-shadow:0 0 0 1px var(--card-background-color)}.manual-dot{background:var(--primary-text-color);opacity:.7}.person-tabs{display:flex;gap:8px;margin:0 0 16px;border-bottom:1px solid var(--divider-color)}.person-tab{font:inherit;color:var(--secondary-text-color);background:transparent;border:0;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer}.person-tab[aria-pressed='true']{color:var(--primary-color);border-bottom-color:var(--primary-color);font-weight:600}.config-card,.info-card{border:1px solid var(--divider-color);border-radius:10px;padding:16px;margin:14px 0}.config-title{display:flex;justify-content:space-between;align-items:center;gap:12px}.config-title h3,.info-card h3{margin:0 0 8px;font-size:17px;font-weight:500}.config-title a{color:var(--primary-color)}dl{margin:10px 0 0}.config-card dl>div{display:grid;grid-template-columns:minmax(130px,1fr) 2fr;gap:10px;padding:7px 0;border-top:1px solid var(--divider-color)}dt{color:var(--secondary-text-color)}dd{margin:0;overflow-wrap:anywhere}.info-card li{margin:8px 0}.export-controls{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin:16px 0}.export-controls label{display:grid;gap:5px;color:var(--secondary-text-color)}.export-controls input,.export-controls select,.export-button{font:inherit;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:7px;padding:9px 12px}.export-button{cursor:pointer}.export-button:disabled{opacity:.5;cursor:wait}.export-stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:16px}.muted{color:var(--secondary-text-color);font-size:13px}.disclaimer{margin-top:16px;padding:12px 14px;border-inline-start:3px solid var(--warning-color,var(--primary-color));background:var(--secondary-background-color,var(--card-background-color,Canvas));color:var(--secondary-text-color);font-size:13px;line-height:1.5}.date-range{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.date-range label{display:grid;gap:5px;color:var(--secondary-text-color)}.date-range input{font:inherit;color:var(--primary-text-color);background:var(--ha-card-background,var(--card-background-color,Canvas));border:1px solid var(--divider-color);border-radius:7px;padding:8px 10px}.validation{padding:10px 12px;border-radius:8px;margin-top:12px}.validation.ok{color:var(--success-color,var(--primary-text-color));background:var(--secondary-background-color,var(--card-background-color,Canvas))}.validation.warning{color:var(--error-color,var(--primary-text-color));background:var(--secondary-background-color,var(--card-background-color,Canvas))}.validation ul{margin-bottom:0}.checklist{padding-left:20px}.checklist li{margin:6px 0}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--divider-color)}th{color:var(--secondary-text-color);font-weight:500}.needs-review{background:var(--secondary-background-color)}.tracking-row{background:var(--secondary-background-color)}.manual-tag{display:inline-block;border-radius:10px;background:var(--secondary-background-color);padding:2px 7px;font-size:12px;color:var(--secondary-text-color)}.text-button{border:0;background:transparent;color:var(--primary-color);font:inherit;cursor:pointer;padding:0}.change-history{margin-top:12px;color:var(--secondary-text-color)}.change-history ul{padding-left:20px}.change-history time{font-variant-numeric:tabular-nums}.day.type-office,.day.type-office_and_home_office{background:var(--info-color,#039be5);color:var(--text-primary-color,#fff)}.day.type-home_office{background:var(--success-color,#43a047);color:var(--text-primary-color,#fff)}.day.type-vacation{background:var(--warning-color,#fbc02d);color:var(--primary-text-color)}.day.type-sick_leave,.day.type-needs_review{background:var(--error-color,#db4437);color:var(--text-primary-color,#fff)}.day.type-tracking{background:var(--state-icon-color,#9e9e9e)}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 16px}.stat{display:flex;flex-direction:column;gap:4px;background:var(--secondary-background-color,var(--card-background-color));border-radius:8px;padding:10px 12px}.stat span{color:var(--secondary-text-color);font-size:12px}.stat strong{font-size:20px;font-weight:500}.selection{border-top:1px solid var(--divider-color);margin-top:20px;padding-top:12px}.selection h3{font-size:17px;margin:0 0 6px}.selection p{color:var(--secondary-text-color)}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{padding:8px 10px}.message:empty{display:none}.message{min-height:1em}ha-card>h2{font-weight:500}.page li{margin:8px 0}@media(max-width:600px){.page{padding:12px}.day{min-height:38px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.export-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.config-title{align-items:flex-start;flex-direction:column}.grid{gap:3px}.tabs{overflow-x:auto}.tabs button{white-space:nowrap;padding:8px 10px}}</style><div class='page'><div class='top'><ha-menu-button></ha-menu-button><div class='brand'><h1>Steuertage</h1><p>Arbeit vor Ort- und Homeoffice-Tage für die Steuererklärung</p></div></div><div class='tabs'><button data-tab='calendar' class='" + (tab === "calendar" ? "active" : "") + "'>Kalender</button><button data-tab='config' class='" + (tab === "config" ? "active" : "") + "'>Konfigurator</button><button data-tab='export' class='" + (tab === "export" ? "active" : "") + "'>Export</button></div>" + content + "</div>";
     const menu = this.shadowRoot.querySelector("ha-menu-button");
     if (menu) menu.hass = this._hass;
     this.shadowRoot.querySelectorAll("[data-tab]").forEach((button) => button.addEventListener("click", () => {
@@ -659,12 +673,35 @@ class SteuertagePanel extends HTMLElement {
       if (this._tab === "calendar") this._loadEvents();
       if (this._tab === "export") this._loadExportEvents();
     }));
-    this.shadowRoot.querySelectorAll("[data-date]").forEach((button) => button.addEventListener("click", () => {
-      this._selected = button.dataset.date;
-      this._correctionFrom = button.dataset.date;
-      this._correctionTo = button.dataset.date;
-      this._render();
-    }));
+    this._dragSelecting = false;
+    this._dragStartDate = "";
+    this._dragMoved = false;
+    this.shadowRoot.querySelectorAll("[data-date]").forEach((button) => {
+      button.addEventListener("pointerdown", () => {
+        this._dragSelecting = true; this._dragStartDate = button.dataset.date;
+        this._dragMoved = false; this._selected = button.dataset.date;
+        this._correctionFrom = button.dataset.date; this._correctionTo = button.dataset.date;
+      });
+      button.addEventListener("pointerenter", () => {
+        if (!this._dragSelecting) return;
+        const date = button.dataset.date;
+        if (date !== this._dragStartDate) this._dragMoved = true;
+        this._selected = this._dragStartDate;
+        this._correctionFrom = this._dragStartDate < date ? this._dragStartDate : date;
+        this._correctionTo = this._dragStartDate > date ? this._dragStartDate : date;
+      });
+      button.addEventListener("click", () => {
+        if (this._dragMoved) { setTimeout(() => { this._dragMoved = false; }, 0); return; }
+        this._selected = button.dataset.date; this._correctionFrom = button.dataset.date;
+        this._correctionTo = button.dataset.date; this._render();
+      });
+    });
+    this.shadowRoot.addEventListener("pointerup", () => {
+      if (this._dragSelecting) {
+        this._dragSelecting = false;
+        if (this._dragMoved) this._render();
+      }
+    });
     this.shadowRoot.querySelector("[data-action='prev']")?.addEventListener("click", () => {
       this._month = new Date(this._month.getFullYear(), this._month.getMonth() - 1, 1);
       this._selected = null;
@@ -699,14 +736,24 @@ class SteuertagePanel extends HTMLElement {
       this._render();
       await this._loadEvents();
     }));
-    this.shadowRoot.querySelector("[data-export-year]")?.addEventListener("change", () => {
-      const value = Number(this.shadowRoot.querySelector("[data-export-year]").value);
-      if (!Number.isInteger(value) || value < 2000 || value > 2100) return;
-      this._exportYear = value;
-      this._exportFrom = value + "-01-01";
-      this._exportTo = value + "-12-31";
-      this._exportKey = ""; this._exportEvents = null; this._loadExportEvents();
-    });
+    this.shadowRoot.querySelectorAll("[data-period]").forEach((button) => button.addEventListener("click", () => {
+      const today = new Date();
+      let start, end;
+      if (button.dataset.period === "year") {
+        const year = Number(button.dataset.year);
+        this._exportYear = year; start = new Date(year, 0, 1); end = new Date(year, 11, 31);
+      } else if (button.dataset.period === "month") {
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      } else {
+        const offset = (today.getDay() + 6) % 7;
+        start = new Date(today); start.setDate(today.getDate() - offset);
+        end = new Date(start); end.setDate(start.getDate() + 6);
+      }
+      this._exportFrom = this._isoDate(start); this._exportTo = this._isoDate(end);
+      this._exportYear = Number(this._exportFrom.slice(0, 4));
+      this._exportKey = ""; this._exportEvents = null; this._render(); this._loadExportEvents();
+    }));
     ["[data-export-from]", "[data-export-to]"].forEach((selector) => {
       this.shadowRoot.querySelector(selector)?.addEventListener("change", () => {
         const from = this.shadowRoot.querySelector("[data-export-from]")?.value;

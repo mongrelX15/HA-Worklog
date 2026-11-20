@@ -164,6 +164,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "office_seconds": round(self._office_seconds),
             "homeoffice_seconds": round(self._homeoffice_seconds),
             "change_history": list(previous.get("change_history", [])),
+            "updated_at": dt_util.now().isoformat(),
         }
 
     def export_history(self) -> dict[str, dict[str, Any]]:
@@ -177,13 +178,21 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return records
 
     async def async_restore_history(
-        self, records: dict[str, Any]
+        self,
+        records: dict[str, Any],
+        *,
+        strategy: str = "merge_newer",
+        backup_created_at: str | None = None,
     ) -> dict[str, int]:
-        """Merge valid backup records without overwriting any saved day."""
+        """Restore valid backup records by replacing or merging by update time."""
         if not isinstance(records, dict):
             raise ValueError("Die Sicherungsdatei enthält keine Tagesliste.")
+        if strategy not in {"replace", "merge_newer"}:
+            raise ValueError("Unbekannte Wiederherstellungsart.")
 
-        imported = skipped = invalid = 0
+        backup_time = dt_util.parse_datetime(backup_created_at or "")
+        imported = replaced = preserved_newer = invalid = 0
+        changed_today = False
         for day_string, record in records.items():
             try:
                 parsed = date.fromisoformat(day_string)
@@ -194,16 +203,31 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         seconds = float(record[field])
                         if not math.isfinite(seconds) or seconds < 0:
                             raise ValueError("Ungültige Zeitangabe.")
-                if day_string in self._history:
-                    skipped += 1
+                normalized = self._normalize_record(record)
+                current = self._history.get(day_string)
+                if current is None:
+                    self._history[day_string] = normalized
+                    imported += 1
+                    changed_today = changed_today or day_string == self._date
                     continue
-                self._history[day_string] = self._normalize_record(record)
-                imported += 1
+                if strategy == "merge_newer":
+                    local_time = dt_util.parse_datetime(str(current.get("updated_at", "")))
+                    saved_time = dt_util.parse_datetime(str(normalized.get("updated_at", "")))
+                    saved_time = saved_time or backup_time
+                    if local_time is None or (saved_time is not None and local_time > saved_time):
+                        preserved_newer += 1
+                        continue
+                    if saved_time is None:
+                        preserved_newer += 1
+                        continue
+                self._history[day_string] = normalized
+                replaced += 1
+                changed_today = changed_today or day_string == self._date
             except (TypeError, ValueError, OverflowError):
                 invalid += 1
 
-        if imported:
-            if self._date in self._history:
+        if imported or replaced:
+            if changed_today and self._date in self._history:
                 restored_today = self._history[self._date]
                 self._office_seconds = float(restored_today.get("office_seconds", 0))
                 self._homeoffice_seconds = float(restored_today.get("homeoffice_seconds", 0))
@@ -211,7 +235,12 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._history[self._date] = self._history_record()
             await self._async_save()
             self.async_set_updated_data(self._snapshot())
-        return {"imported": imported, "skipped": skipped, "invalid": invalid}
+        return {
+            "imported": imported,
+            "replaced": replaced,
+            "preserved_newer": preserved_newer,
+            "invalid": invalid,
+        }
 
     async def async_set_day_override(
         self,
@@ -259,6 +288,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "office_seconds": office_seconds,
             "homeoffice_seconds": homeoffice_seconds,
             "change_history": change_history,
+            "updated_at": dt_util.now().isoformat(),
         }
         if key == self._date:
             self.data = self._snapshot()

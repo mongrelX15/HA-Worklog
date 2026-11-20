@@ -30,7 +30,7 @@ from .coordinator import DAY_TYPES, WorklogCoordinator
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
 PANEL_PATH = "steuertage"
-PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.2.0-beta.4-theme-config"
+PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.2.0-beta.4-calendar-export"
 PANEL_STATIC_URL = "/steuertage_static"
 PANEL_SERVICE = "set_day_override"
 MANUAL_DAY_TYPES = set(DAY_TYPES) | {"automatic"}
@@ -99,6 +99,8 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
                 vol.Required("type"): "steuertage/restore_history",
                 vol.Required("person_entity"): str,
                 vol.Required("records"): dict,
+                vol.Optional("strategy", default="merge_newer"): vol.In({"replace", "merge_newer"}),
+                vol.Optional("created_at", default=""): str,
             }
         )
         @websocket_api.async_response
@@ -107,7 +109,7 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
             connection: websocket_api.ActiveConnection,
             msg: dict[str, Any],
         ) -> None:
-            """Merge a backup into the selected person's saved history."""
+            """Restore a backup using the selected merge or replace strategy."""
             coordinator = next(
                 (
                     item
@@ -124,7 +126,11 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
                 )
                 return
             try:
-                result = await coordinator.async_restore_history(msg["records"])
+                result = await coordinator.async_restore_history(
+                    msg["records"],
+                    strategy=msg["strategy"],
+                    backup_created_at=msg["created_at"],
+                )
             except ValueError as err:
                 connection.send_error(
                     msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err)
