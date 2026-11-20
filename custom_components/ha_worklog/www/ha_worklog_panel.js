@@ -7,6 +7,8 @@ class HAWorklogPanel extends HTMLElement {
     this._selected = null;
     this._calendarEntityId = null;
     this._calendarInitialized = false;
+    this._calendarSignature = "";
+    this._hasReceivedHass = false;
     this._haThemeVariables = new Set();
     this._events = [];
     this._loadedMonth = "";
@@ -20,12 +22,23 @@ class HAWorklogPanel extends HTMLElement {
     this._hass = hass;
     this._applyTheme(hass);
     const calendars = this._calendarEntities();
+    const signature = calendars.map((item) => [
+      item.entity_id,
+      item.attributes.worklog_person_entity,
+      item.attributes.worklog_person_name,
+      item.attributes.worklog_user_id,
+    ].join(":")).join("|");
+    const initial = !this._hasReceivedHass;
+    const listChanged = signature !== this._calendarSignature;
+    let selectionChanged = false;
+
     if (!this._calendarInitialized && calendars.length) {
       const calendar = this._calendarEntity();
       this._calendarEntityId = calendar?.entity_id || null;
       this._calendarInitialized = true;
       this._loadedMonth = "";
       this._events = [];
+      selectionChanged = true;
     } else if (
       this._calendarEntityId &&
       !calendars.some((item) => item.entity_id === this._calendarEntityId)
@@ -33,9 +46,17 @@ class HAWorklogPanel extends HTMLElement {
       this._calendarEntityId = null;
       this._loadedMonth = "";
       this._events = [];
+      selectionChanged = true;
     }
-    this._render();
-    if (this._tab === "calendar") this._loadEvents();
+
+    this._calendarSignature = signature;
+    this._hasReceivedHass = true;
+    if (initial || listChanged || selectionChanged || this._tab === "config") {
+      this._render();
+    }
+    if (this._tab === "calendar" && (initial || listChanged || selectionChanged)) {
+      this._loadEvents();
+    }
   }
 
   _applyTheme(hass) {
