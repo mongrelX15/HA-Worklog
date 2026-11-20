@@ -2,6 +2,8 @@
 
 ## Noch nicht veröffentlicht
 
+- Kalender: Esc löscht auch den gespeicherten Auswahlzeitraum, damit nach dem Leeren keine Tagesumrandungen stehen bleiben.
+- Kalender: Ziehen im Mehrfachauswahl-Modus markiert oder entfernt wieder den vollständigen Datumsbereich zwischen Start- und Zieltag.
 - Legende: Punkte für die automatische Erkennung und „Erkennung läuft“ lila an die Kalenderdarstellung angepasst.
 - Datenmigration: ältere Krankheits- und Urlaubseinträge werden als manuelle Änderungen behandelt. Beim Zurücksetzen auf automatisch kann die automatische Erkennung diese Abwesenheitstypen nicht mehr übernehmen; ohne Signal wird stattdessen der passende automatische Status angezeigt.
 
