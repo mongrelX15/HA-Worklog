@@ -178,6 +178,12 @@ def _normalize_base(values: dict[str, Any]) -> dict[str, Any]:
     values[CONF_HA_USER_ID] = None
     for key in (CONF_DEVICE_TRACKER, CONF_HOME_ZONE, CONF_WORK_SIGNAL, CONF_WORK_CALENDAR):
         values[key] = values.get(key) or None
+    if not values[CONF_HOME_OFFICE_ENABLED]:
+        values[CONF_HOME_ZONE] = None
+        values[CONF_DEVICE_TRACKER] = None
+        values[CONF_WORK_SIGNAL] = None
+    if not values[CONF_WORK_CALENDAR_ENABLED]:
+        values[CONF_WORK_CALENDAR] = None
     return values
 
 
