@@ -1,7 +1,11 @@
 """Sensors exposed by HA Work-Log."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -16,10 +20,21 @@ async def async_setup_entry(
 ) -> None:
     """Create work-log sensors."""
     coordinator: WorklogCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([
-        WorklogDurationSensor(coordinator, entry),
-        WorklogDaySensor(coordinator, entry),
-    ])
+    async_add_entities(
+        [
+            WorklogDurationSensor(coordinator, entry),
+            WorklogDaySensor(coordinator, entry),
+        ]
+    )
+
+
+def _device_info(coordinator: WorklogCoordinator, entry: ConfigEntry) -> dict:
+    return {
+        "identifiers": {(DOMAIN, entry.entry_id)},
+        "name": f"HA Work-Log – {coordinator.person_name}",
+        "manufacturer": "HA Work-Log",
+        "model": "Beta",
+    }
 
 
 class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
@@ -34,12 +49,7 @@ class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity)
     def __init__(self, coordinator: WorklogCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_work_duration"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "HA Work-Log",
-            "manufacturer": "HA Work-Log",
-            "model": "Beta",
-        }
+        self._attr_device_info = _device_info(coordinator, entry)
 
     @property
     def native_value(self):
@@ -51,13 +61,13 @@ class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity)
         return {
             "datum": data["date"],
             "arbeitszone_sekunden": data["office_seconds"],
-            "homeoffice_sensor_sekunden": data["homeoffice_seconds"],
+            "homeoffice_sekunden": data["homeoffice_seconds"],
             "schwellwert_minuten": data["threshold_minutes"],
         }
 
 
 class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
-    """Expose the automatically detected kind of work day."""
+    """Expose the effective day classification."""
 
     _attr_has_entity_name = True
     _attr_name = "Tagestyp"
@@ -68,12 +78,7 @@ class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
     def __init__(self, coordinator: WorklogCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_day_type"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "HA Work-Log",
-            "manufacturer": "HA Work-Log",
-            "model": "Beta",
-        }
+        self._attr_device_info = _device_info(coordinator, entry)
 
     @property
     def native_value(self):
@@ -83,10 +88,14 @@ class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
     def extra_state_attributes(self):
         data = self.coordinator.data
         return {
+            "person": self.coordinator.person_entity,
             "datum": data["date"],
             "schwellwert_minuten": data["threshold_minutes"],
             "arbeitszone_erreichbar": data["office_source_valid"],
-            "homeoffice_sensor_erreichbar": data["homeoffice_source_valid"],
+            "homeoffice_erkennung_erreichbar": data["homeoffice_source_valid"],
+            "person_status": data["person_status"],
+            "geraet_status": data["device_status"],
+            "erkennungsgrund": data["homeoffice_reason"],
             "arbeitszone_aktiv": data["office_active"],
-            "homeoffice_sensor_aktiv": data["homeoffice_active"],
+            "homeoffice_aktiv": data["homeoffice_active"],
         }
