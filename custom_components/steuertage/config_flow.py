@@ -26,6 +26,59 @@ from .const import (
 from .logic import find_person_configuration_conflicts
 
 
+def _setup_schema(
+    defaults: dict[str, Any] | None = None, *, include_person: bool = True
+) -> vol.Schema:
+    """Build the complete one-page setup form."""
+    defaults = defaults or {}
+    fields: dict[Any, Any] = {}
+    if include_person:
+        fields[vol.Required(CONF_PERSON)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="person")
+        )
+
+    fields[vol.Required(
+        CONF_OFFICE_ZONE,
+        default=defaults.get(CONF_OFFICE_ZONE) or "",
+    )] = selector.EntitySelector(selector.EntitySelectorConfig(domain="zone"))
+    legacy_minutes = defaults.get(CONF_THRESHOLD_MINUTES)
+    default_hours = defaults.get(
+        CONF_THRESHOLD_HOURS,
+        float(legacy_minutes) / 60 if legacy_minutes is not None else DEFAULT_THRESHOLD_HOURS,
+    )
+    fields[vol.Required(
+        CONF_THRESHOLD_HOURS,
+        default=float(default_hours),
+    )] = selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=0.5, max=24, step=0.5, mode=NumberSelectorMode.BOX
+        )
+    )
+    fields[vol.Required(
+        CONF_HOME_OFFICE_ENABLED,
+        default=bool(defaults.get(CONF_HOME_OFFICE_ENABLED, False)),
+    )] = selector.BooleanSelector()
+    fields[vol.Optional(
+        CONF_HOME_ZONE,
+        default=defaults.get(CONF_HOME_ZONE) or "",
+    )] = selector.EntitySelector(selector.EntitySelectorConfig(domain="zone"))
+    fields[vol.Optional(
+        CONF_DEVICE_TRACKER,
+        default=defaults.get(CONF_DEVICE_TRACKER) or "",
+    )] = selector.EntitySelector(selector.EntitySelectorConfig(domain="device_tracker"))
+    fields[vol.Required(
+        CONF_WORK_CALENDAR_ENABLED,
+        default=bool(defaults.get(
+            CONF_WORK_CALENDAR_ENABLED, bool(defaults.get(CONF_WORK_CALENDAR))
+        )),
+    )] = selector.BooleanSelector()
+    fields[vol.Optional(
+        CONF_WORK_CALENDAR,
+        default=defaults.get(CONF_WORK_CALENDAR) or "",
+    )] = selector.EntitySelector(selector.EntitySelectorConfig(domain="calendar"))
+    return vol.Schema(fields)
+
+
 def _base_schema(
     defaults: dict[str, Any] | None = None, *, include_person: bool = True
 ) -> vol.Schema:
@@ -142,6 +195,17 @@ def _homeoffice_errors(values: dict[str, Any]) -> dict[str, str]:
     return {}
 
 
+def _feature_errors(values: dict[str, Any]) -> dict[str, str]:
+    """Validate optional features only when enabled."""
+    if values.get(CONF_HOME_OFFICE_ENABLED):
+        errors = _homeoffice_errors(values)
+        if errors:
+            return errors
+    if values.get(CONF_WORK_CALENDAR_ENABLED) and not values.get(CONF_WORK_CALENDAR):
+        return {CONF_WORK_CALENDAR: "work_calendar_required"}
+    return {}
+
+
 def _find_conflicts(hass, values: dict[str, Any], *, exclude_entry_id: str | None = None) -> set[str]:
     """Prevent ambiguous person and tracker assignments."""
     configurations = [
@@ -159,11 +223,11 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
-        """Collect required basics, then offer optional feature steps."""
+        """Collect all setup settings on one page."""
         errors: dict[str, str] = {}
         if user_input is not None:
             values = _normalize_base(dict(user_input))
-            errors = _base_errors(values)
+            errors = _base_errors(values) or _feature_errors(values)
             if not errors:
                 self._person_entity = values[CONF_PERSON]
                 await self.async_set_unique_id(self._person_entity)
@@ -171,9 +235,11 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors = {key: key for key in _find_conflicts(self.hass, values)}
             if not errors:
                 self._draft_config = values
-                return await self.async_step_features()
+                return await self.async_step_finish()
         return self.async_show_form(
-            step_id="user", data_schema=_base_schema(user_input), errors=errors
+            step_id="user",
+            data_schema=_setup_schema(user_input),
+            errors=errors,
         )
 
     async def async_step_features(self, user_input: dict[str, Any] | None = None):
@@ -288,21 +354,28 @@ class WorklogOptionsFlow(config_entries.OptionsFlow):
     """Update required settings and manage optional feature steps."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
-        """Update required settings before showing the feature menu."""
+        """Update all settings on one page."""
         current = _configuration(self.config_entry)
+        values_for_form = {**current, **(user_input or {})}
         if user_input is not None:
             values = _normalize_base({**current, **user_input})
-            errors = _base_errors(values)
+            errors = _base_errors(values) or _feature_errors(values)
             if not errors:
-                self._draft_config = values
-                return await self.async_step_manage()
+                errors = {key: key for key in _find_conflicts(
+                    self.hass, values,
+                    exclude_entry_id=self.config_entry.entry_id
+                )}
+            if not errors:
+                values.pop(CONF_PERSON, None)
+                return self.async_create_entry(title="", data=values)
             return self.async_show_form(
                 step_id="init",
-                data_schema=_base_schema(values, include_person=False),
+                data_schema=_setup_schema(values_for_form, include_person=False),
                 errors=errors,
             )
         return self.async_show_form(
-            step_id="init", data_schema=_base_schema(current, include_person=False)
+            step_id="init",
+            data_schema=_setup_schema(current, include_person=False),
         )
 
     async def async_step_manage(self, user_input: dict[str, Any] | None = None):
