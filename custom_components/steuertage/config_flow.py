@@ -178,13 +178,33 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_features(self, user_input: dict[str, Any] | None = None):
         """Offer optional features explicitly instead of implying inline fields."""
-        options = ["homeoffice", "work_calendar"]
+        options = ["basics", "homeoffice", "work_calendar"]
         if self._draft_config.get(CONF_HOME_OFFICE_ENABLED):
             options.append("disable_homeoffice")
         if self._draft_config.get(CONF_WORK_CALENDAR_ENABLED):
             options.append("disable_work_calendar")
         options.append("finish")
         return self.async_show_menu(step_id="features", menu_options=options)
+
+    async def async_step_basics(self, user_input: dict[str, Any] | None = None):
+        """Return to and update the required setup details."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            values = _normalize_base(dict(user_input))
+            errors = _base_errors(values)
+            if not errors:
+                person_entity = values[CONF_PERSON]
+                errors = {key: key for key in _find_conflicts(self.hass, values)}
+                if not errors:
+                    await self.async_set_unique_id(person_entity)
+                    self._person_entity = person_entity
+                    self._draft_config.update(values)
+                    return await self.async_step_features()
+        return self.async_show_form(
+            step_id="basics",
+            data_schema=_base_schema({**self._draft_config, **(user_input or {})}),
+            errors=errors,
+        )
 
     async def async_step_homeoffice(self, user_input: dict[str, Any] | None = None):
         """Configure Homeoffice only after the user selects that feature."""
