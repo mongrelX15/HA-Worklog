@@ -5,7 +5,7 @@
 
 **Steuertage** erfasst Büro- und Homeoffice-Tage für die Steuererklärung. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
 
-## Beta 0.1.0-beta.10 – Multiuser- und Homeoffice-Vorschau
+## Beta 0.1.0-beta.11 – Steuertage, Theme und Personenwechsel
 
 Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → Steuertage** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
 
