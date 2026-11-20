@@ -168,6 +168,7 @@ class SteuertagePanel extends HTMLElement {
 
   set panel(value) {
     this._panel = value;
+    this._render();
   }
 
   _isoDate(date) {
