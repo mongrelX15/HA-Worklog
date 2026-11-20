@@ -90,7 +90,18 @@ class HAWorklogPanel extends HTMLElement {
     const calendar = this._calendarEntity();
     const entityId = calendar?.entity_id;
     const monthKey = entityId + ":" + this._isoDate(this._month);
-    if (!entityId || this._loadedMonth === monthKey || !this._hass?.connection) return;
+    if (!entityId) {
+      if (this._unsubscribe) {
+        const unsubscribe = this._unsubscribe;
+        this._unsubscribe = undefined;
+        await unsubscribe();
+      }
+      this._loadedMonth = "";
+      this._events = [];
+      this._render();
+      return;
+    }
+    if (this._loadedMonth === monthKey || !this._hass?.connection) return;
     this._loadedMonth = monthKey;
     if (this._unsubscribe) {
       const unsubscribe = this._unsubscribe;
