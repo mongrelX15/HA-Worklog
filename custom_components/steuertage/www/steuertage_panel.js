@@ -936,9 +936,9 @@ class SteuertagePanel extends HTMLElement {
           const ordered = [...dates].sort();
           this._selectedDates = dates;
           this._selectionMode = "multiple";
-          this._selected = dates.has(date) ? date : ordered.at(-1) || date;
-          this._correctionFrom = ordered[0] || date;
-          this._correctionTo = ordered.at(-1) || date;
+          this._selected = dates.has(date) ? date : ordered.at(-1) || null;
+          this._correctionFrom = ordered[0] || "";
+          this._correctionTo = ordered.at(-1) || "";
           this._render();
           return;
         }
