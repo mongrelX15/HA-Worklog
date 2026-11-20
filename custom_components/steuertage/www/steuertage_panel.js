@@ -30,6 +30,7 @@ class SteuertagePanel extends HTMLElement {
     this._rangeAnchorDate = null;
     this._multiSelectMode = false;
     this._selectionMode = "single";
+    this._shortcutQueue = [];
     this._shortcutHandler = (event) => this._handleCalendarShortcut(event);
   }
 
@@ -385,8 +386,8 @@ class SteuertagePanel extends HTMLElement {
   }
 
   _handleCalendarShortcut(event) {
-    if (this._tab !== "calendar" || event.defaultPrevented || event.repeat ||
-      event.isComposing || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+    if (this._tab !== "calendar" || event.repeat || event.isComposing ||
+      event.metaKey || event.ctrlKey || event.altKey) return;
     const path = typeof event.composedPath === "function" ? event.composedPath() : [];
     const typingTarget = path.some((target) => {
       const tag = target?.tagName;
@@ -398,6 +399,7 @@ class SteuertagePanel extends HTMLElement {
       if (!this._selected && !this._selectedDates?.size && !this._multiSelectMode) return;
       event.preventDefault();
       event.stopImmediatePropagation();
+      this._shortcutQueue = [];
       this._selected = null;
       this._selectedDates = new Set();
       this._rangeAnchorDate = null;
@@ -411,14 +413,46 @@ class SteuertagePanel extends HTMLElement {
       return;
     }
     if (!this._selected && !this._selectedDates?.size) return;
-    const key = String(event.key || "").toLowerCase();
+    const keyByCode = {
+      KeyA: "a", KeyH: "h", KeyU: "u", KeyK: "k", KeyE: "e",
+      Digit0: "0", Numpad0: "0",
+    };
+    const key = keyByCode[event.code] || String(event.key || "").toLowerCase();
     const type = ({ a: "office", h: "home_office", u: "vacation", k: "sick_leave", e: "automatic", "0": "no_work" })[key];
     if (!type) return;
-    const button = this.shadowRoot.querySelector("[data-type='" + type + "']");
-    if (!button || button.disabled) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    button.click();
+    const action = {
+      type,
+      selected: this._selected,
+      selectedDates: [...(this._selectedDates || [])],
+      selectionMode: this._selectionMode,
+      correctionFrom: this._correctionFrom,
+      correctionTo: this._correctionTo,
+    };
+    if (this._busy) {
+      this._shortcutQueue.push(action);
+      return;
+    }
+    const button = this.shadowRoot.querySelector("[data-type='" + type + "']");
+    if (button && !button.disabled) button.click();
+  }
+
+  _processShortcutQueue() {
+    if (this._busy || !this._shortcutQueue?.length) return;
+    while (this._shortcutQueue.length) {
+      const action = this._shortcutQueue.shift();
+      this._selected = action.selected;
+      this._selectedDates = new Set(action.selectedDates);
+      this._selectionMode = action.selectionMode;
+      this._correctionFrom = action.correctionFrom;
+      this._correctionTo = action.correctionTo;
+      this._render();
+      const button = this.shadowRoot.querySelector("[data-type='" + action.type + "']");
+      if (!button || button.disabled) continue;
+      button.click();
+      return;
+    }
   }
 
   _showMessage(message) {
@@ -1197,6 +1231,7 @@ class SteuertagePanel extends HTMLElement {
       } finally {
         this._busy = false;
         this._render();
+        this._processShortcutQueue();
       }
     }));
   }
