@@ -18,10 +18,14 @@ from .const import (
     BETA_THRESHOLD_SECONDS,
     CONF_DEVICE_TRACKER,
     CONF_HA_USER_ID,
+    CONF_HOME_OFFICE_ENABLED,
     CONF_HOME_ZONE,
     CONF_OFFICE_ZONE,
     CONF_PERSON,
+    CONF_THRESHOLD_MINUTES,
+    CONF_WORK_CALENDAR,
     CONF_WORK_SIGNAL,
+    DEFAULT_THRESHOLD_MINUTES,
     DOMAIN,
 )
 from .logic import (
@@ -61,14 +65,30 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             else self.person_entity
         )
         self.ha_user_id = config.get(CONF_HA_USER_ID)
-        self.home_zone_entity = config.get(CONF_HOME_ZONE) or "zone.home"
-        self.homeoffice_device_entity = config.get(CONF_DEVICE_TRACKER)
-        self.legacy_signal_entity = config.get(CONF_WORK_SIGNAL)
+        self.homeoffice_enabled = bool(config.get(CONF_HOME_OFFICE_ENABLED, True))
+        self.home_zone_entity = (
+            config.get(CONF_HOME_ZONE) or "zone.home"
+            if self.homeoffice_enabled
+            else None
+        )
+        self.homeoffice_device_entity = (
+            config.get(CONF_DEVICE_TRACKER) if self.homeoffice_enabled else None
+        )
+        self.legacy_signal_entity = (
+            config.get(CONF_WORK_SIGNAL) if self.homeoffice_enabled else None
+        )
         self.legacy_mode = bool(
-            not self.homeoffice_device_entity and self.legacy_signal_entity
+            self.homeoffice_enabled
+            and not self.homeoffice_device_entity
+            and self.legacy_signal_entity
         )
         self.office_zone_entity = config.get(CONF_OFFICE_ZONE) or None
-        self.threshold_seconds = BETA_THRESHOLD_SECONDS
+        self.work_calendar_entity = config.get(CONF_WORK_CALENDAR) or None
+        self.threshold_minutes = max(
+            1,
+            min(1440, int(config.get(CONF_THRESHOLD_MINUTES, DEFAULT_THRESHOLD_MINUTES))),
+        )
+        self.threshold_seconds = self.threshold_minutes * 60
         self.store = Store(hass, 1, make_storage_key(entry.entry_id))
         self._office_seconds = 0.0
         self._homeoffice_seconds = 0.0
@@ -77,7 +97,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._homeoffice_active = False
         self._location: str | None = None
         self._office_source_valid = not bool(self.office_zone_entity)
-        self._homeoffice_source_valid = False
+        self._homeoffice_source_valid = not self.homeoffice_enabled
         self._person_source_valid = False
         self._device_source_valid = False
         self._person_status = "unknown"
@@ -200,6 +220,8 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         reason: str | None = None,
     ) -> None:
         """Persist a manual correction and append an authenticated audit record."""
+        if not self.homeoffice_enabled and day_type in {"home_office", "office_and_home_office"}:
+            raise ValueError("Homeoffice-Tage sind für diese Person nicht aktiviert.")
         day = date.fromisoformat(day_string)
         key = day.isoformat()
         existing = self._history.get(key, {})
@@ -278,13 +300,22 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return entity_state.state.casefold() in self._zone_tokens(zone_entity, zone_state)
 
     def _presence(self) -> tuple[str | None, bool, bool]:
-        """Update signal diagnostics and return location and valid home-office state."""
+        """Update source diagnostics and return location and Homeoffice status."""
         person = self.hass.states.get(self.person_entity)
-        home_zone = self.hass.states.get(self.home_zone_entity)
         person_valid = person is not None and person.state not in ("unknown", "unavailable")
         self._person_status = person.state if person else "unavailable"
+
+        home_zone = (
+            self.hass.states.get(self.home_zone_entity)
+            if self.homeoffice_enabled and self.home_zone_entity
+            else None
+        )
         home_zone_valid = bool(
-            home_zone is not None and home_zone.state not in ("unknown", "unavailable")
+            not self.homeoffice_enabled
+            or (
+                home_zone is not None
+                and home_zone.state not in ("unknown", "unavailable")
+            )
         )
         self._person_source_valid = bool(person_valid and home_zone_valid)
 
@@ -299,19 +330,25 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         if not person_valid:
             location = None
-        elif self._is_in_zone(person, self.home_zone_entity):
+        elif self.homeoffice_enabled and self._is_in_zone(person, self.home_zone_entity):
             location = "home"
         elif self.office_zone_entity and self._is_in_zone(person, self.office_zone_entity):
             location = "office"
         else:
             location = "other"
 
-        if self.legacy_mode:
+        if not self.homeoffice_enabled:
+            self._device_status = "disabled"
+            self._device_source_valid = True
+            self._homeoffice_source_valid = True
+            self._homeoffice_reason = "homeoffice_disabled"
+            homeoffice_active = False
+        elif self.legacy_mode:
             signal = self.hass.states.get(self.legacy_signal_entity)
             signal_valid = signal is not None and signal.state not in ("unknown", "unavailable")
             self._device_status = signal.state if signal else "unavailable"
             self._device_source_valid = bool(signal_valid)
-            self._homeoffice_source_valid = bool(signal_valid)
+            self._homeoffice_source_valid = bool(signal_valid and home_zone_valid)
             homeoffice_active = bool(signal_valid and signal.state == "on")
             self._homeoffice_reason = (
                 "legacy_signal_active" if homeoffice_active
@@ -319,7 +356,11 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 else "legacy_signal_unavailable"
             )
         else:
-            device = self.hass.states.get(self.homeoffice_device_entity) if self.homeoffice_device_entity else None
+            device = (
+                self.hass.states.get(self.homeoffice_device_entity)
+                if self.homeoffice_device_entity
+                else None
+            )
             device_valid = device is not None and device.state not in ("unknown", "unavailable")
             self._device_status = device.state if device else "unavailable"
             self._device_source_valid = bool(device_valid)
@@ -339,8 +380,57 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 device_home,
             )
 
-        self._office_source_valid = bool(person_valid and office_zone_valid)
+        calendar_state = (
+            self.hass.states.get(self.work_calendar_entity)
+            if self.work_calendar_entity
+            else None
+        )
+        calendar_source_valid = bool(
+            not self.work_calendar_entity
+            or (
+                calendar_state is not None
+                and calendar_state.state not in ("unknown", "unavailable")
+                and not calendar_state.attributes.get("worklog_person_entity")
+            )
+        )
+        self._office_source_valid = bool(
+            person_valid and office_zone_valid and calendar_source_valid
+        )
         return location, bool(person_valid), homeoffice_active
+
+    def _work_calendar_allows_office(self, now: datetime) -> bool:
+        """Allow office-zone accumulation only during a timed calendar event."""
+        if not self.work_calendar_entity:
+            return True
+        state = self.hass.states.get(self.work_calendar_entity)
+        if (
+            state is None
+            or state.state != "on"
+            or state.attributes.get("worklog_person_entity")
+        ):
+            return False
+        start_value = state.attributes.get("start_time")
+        end_value = state.attributes.get("end_time")
+        if not isinstance(start_value, str) or not isinstance(end_value, str):
+            return False
+        # All-day calendar events have date-only values and must not activate
+        # work-zone detection for an entire day.
+        if "T" not in start_value or "T" not in end_value:
+            return False
+        start = dt_util.parse_datetime(start_value)
+        end = dt_util.parse_datetime(end_value)
+        if start is None or end is None:
+            return False
+        local_now = dt_util.as_local(now)
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=local_now.tzinfo)
+        else:
+            start = dt_util.as_local(start)
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=local_now.tzinfo)
+        else:
+            end = dt_util.as_local(end)
+        return start <= local_now < end
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Accumulate each configured signal independently."""
@@ -363,7 +453,10 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         location, person_valid, homeoffice_active = self._presence()
         self._location = location
         self._office_active = bool(
-            self.office_zone_entity and person_valid and location == "office"
+            self.office_zone_entity
+            and person_valid
+            and location == "office"
+            and self._work_calendar_allows_office(now)
         )
         self._homeoffice_active = homeoffice_active
         self._last_update = now
@@ -381,6 +474,8 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._homeoffice_active,
             self._office_source_valid,
             self._homeoffice_source_valid,
+            threshold_seconds=self.threshold_seconds,
+            homeoffice_enabled=self.homeoffice_enabled,
         )
         saved_record = self._history.get(self._date, {})
         manual_override = saved_record.get("manual_override")
@@ -396,7 +491,9 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "office_active": self._office_active,
             "homeoffice_active": self._homeoffice_active,
             "location": self._location,
-            "threshold_minutes": self.threshold_seconds // 60,
+            "threshold_minutes": self.threshold_minutes,
+            "homeoffice_enabled": self.homeoffice_enabled,
+            "work_calendar_entity": self.work_calendar_entity,
             "day_type": manual_override or automatic_day_type,
             "automatic_day_type": automatic_day_type,
             "manual_override": manual_override,

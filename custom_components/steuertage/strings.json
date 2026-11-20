@@ -3,20 +3,25 @@
     "step": {
       "user": {
         "title": "Steuertage einrichten",
-        "description": "Richte eine Person ein. Ein Arbeitstag zählt, sobald die Arbeitszone oder die Homeoffice-Erkennung mindestens 30 Minuten aktiv war.",
+        "description": "Richte eine Person ein. Homeoffice-Erkennung ist optional; der zusätzliche Arbeitskalender begrenzt die Büro-Erkennung auf eingetragene zeitgebundene Termine. Der Schwellwert beträgt standardmäßig 120 Minuten und ist frei einstellbar.",
         "data": {
           "person_entity": "Person",
-          "home_zone": "Home-Zone",
+          "home_zone": "Home-Zone für Homeoffice",
           "homeoffice_device": "Homeoffice-Gerät (device_tracker)",
           "office_zone": "Büro-Zone (optional)",
-          "ha_user_id": "HA-Benutzer für die Standardansicht (optional)"
+          "ha_user_id": "HA-Benutzer für die Standardansicht (optional)",
+          "homeoffice_enabled": "Homeoffice-Erkennung verwenden",
+          "work_calendar": "Arbeitskalender für Schichten (optional)",
+          "threshold_minutes": "Mindestdauer pro Signal (Minuten; Standard 120)"
         }
       }
     },
     "error": {
       "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet.",
       "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
-      "user_already_configured": "Dieser HA-Benutzer ist bereits einer anderen Person als Standardansicht zugeordnet."
+      "user_already_configured": "Dieser HA-Benutzer ist bereits einer anderen Person als Standardansicht zugeordnet.",
+      "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung oder deaktiviere Homeoffice.",
+      "homeoffice_device_required": "Wähle einen device_tracker oder deaktiviere Homeoffice."
     },
     "abort": {
       "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet."
@@ -26,19 +31,24 @@
     "step": {
       "init": {
         "title": "Steuertage-Einstellungen",
-        "description": "Passe die Personenerkennung an. Ältere Beta-7-Einträge können vorübergehend weiter den bisherigen Homeoffice-Sensor verwenden.",
+        "description": "Passe die Erkennung für diese Person an. Homeoffice ist optional; ein Arbeitskalender begrenzt die Büro-Zone auf zeitgebundene Schichten. Der Standard-Schwellwert beträgt 120 Minuten.",
         "data": {
-          "home_zone": "Home-Zone",
-          "homeoffice_device": "Homeoffice-Gerät (device_tracker; leer lassen für bisherige Beta-7-Erkennung)",
+          "home_zone": "Home-Zone für Homeoffice",
+          "homeoffice_device": "Homeoffice-Gerät (device_tracker)",
           "office_zone": "Büro-Zone (optional)",
           "ha_user_id": "HA-Benutzer für die Standardansicht (optional)",
-          "work_signal": "Bisheriger Homeoffice-Sensor (Beta-7)"
+          "work_signal": "Bisheriger Homeoffice-Sensor (Beta-7)",
+          "homeoffice_enabled": "Homeoffice-Erkennung verwenden",
+          "work_calendar": "Arbeitskalender für Schichten (optional)",
+          "threshold_minutes": "Mindestdauer pro Signal (Minuten; Standard 120)"
         }
       }
     },
     "error": {
       "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
-      "user_already_configured": "Dieser HA-Benutzer ist bereits einer anderen Person als Standardansicht zugeordnet."
+      "user_already_configured": "Dieser HA-Benutzer ist bereits einer anderen Person als Standardansicht zugeordnet.",
+      "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung oder deaktiviere Homeoffice.",
+      "homeoffice_device_required": "Wähle einen device_tracker oder deaktiviere Homeoffice."
     }
   }
 }

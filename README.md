@@ -1,27 +1,28 @@
 # Steuertage
 
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Integration-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-2-0-beta-2)
+[![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-2-0-beta-3-optionale-homeoffice-erkennung-arbeitskalender-und-schwellenwert)
 
 **Steuertage** erfasst Büro- und Homeoffice-Tage für die Steuererklärung. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
 
-## Beta 0.2.0-beta.2 – Export, Prüfliste und Datenpflege
+## Beta 0.2.0-beta.3 – optionale Homeoffice-Erkennung, Arbeitskalender und Schwellenwert
 
 Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → Steuertage** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
 
 - **Person**: Home-Assistant-Person
-- **Home-Zone**: standardmäßig `zone.home`
-- **Homeoffice-Gerät**: `device_tracker` des Geräts, das Homeoffice-Anwesenheit signalisiert
-- **Büro-Zone**: optional
+- **Homeoffice-Erkennung**: optional; wenn aktiviert, wird eine Home-Zone und ein `device_tracker` benötigt
+- **Büro-Zone**: optional; in dieser Zone wird ein Bürotag erkannt
+- **Arbeitskalender**: optional; begrenzt die Büro-Erkennung auf laufende zeitgebundene Schichten. Ganztägige Kalendereinträge zählen nicht. Ohne Auswahl gilt reine Zonenerkennung.
+- **Schwellwert**: frei einstellbar in Minuten, Standardwert 120 Minuten
 - **HA-Benutzer**: optionaler Standardkalender beim Öffnen des Panels
 
-Ein Homeoffice-Signal gilt nur, wenn die Person und das ausgewählte Gerät beide in der eingestellten Home-Zone erkannt werden. Ein fehlender oder nicht verfügbarer Tracker wird nicht als Homeoffice gezählt. Die Integration stellt dafür pro Person einen Homeoffice-Binary-Sensor mit Status- und Diagnoseattributen bereit. Dieser Anwesenheitsstatus ist kein Nachweis tatsächlicher Arbeitsleistung.
+Ist Homeoffice aktiviert, zählt das Signal nur, wenn die Person und der ausgewählte Tracker beide in der eingestellten Home-Zone erkannt werden. Ein fehlender oder nicht verfügbarer Tracker wird nicht als Homeoffice gezählt. Bei deaktiviertem Homeoffice sind weder Tracker noch Home-Zone erforderlich; die entsprechenden Auswahlmöglichkeiten entfallen im Kalender und in der Auswertung. Dieser Anwesenheitsstatus ist kein Nachweis tatsächlicher Arbeitsleistung.
 
-Ein Arbeitstag zählt, wenn die konfigurierte Büro-Zone oder die Homeoffice-Erkennung mindestens 30 Minuten aktiv war. Die Zeitmessung wird intern je Person getrennt geführt und erscheint nicht als Stundenübersicht.
+Ein Büro- oder Homeoffice-Tag zählt, sobald das jeweilige Signal den pro Person eingestellten Schwellwert erreicht. Der Standard beträgt 120 Minuten. Ein optional ausgewählter Arbeitskalender lässt Bürozeit nur während eines laufenden zeitgebundenen Eintrags zählen. So wird ein Aufenthalt an der Arbeitsadresse außerhalb einer eingetragenen Schicht nicht automatisch gewertet. Ohne Arbeitskalender bleibt die bisherige Erkennung über die Büro-Zone aktiv. Die Zeitmessung wird intern je Person getrennt geführt und erscheint nicht als Stundenübersicht.
 
 ## Mehrere Personen und Kalender
 
-Jede Person erhält einen eigenen Kalender, Tagestyp-Sensor, Homeoffice-Sensor und getrennten lokalen Verlauf. Derselbe Büro- oder Home-Zonenbereich kann von mehreren Personen verwendet werden; eine Person und ein Homeoffice-Gerät können jeweils nur einer Konfiguration zugeordnet sein.
+Jede Person erhält einen eigenen Kalender, Tagestyp-Sensor und getrennten lokalen Verlauf. Der Homeoffice-Sensor wird nur angelegt, wenn Homeoffice für diese Person aktiviert ist. Derselbe Büro- oder Home-Zonenbereich kann von mehreren Personen verwendet werden; eine Person und ein Homeoffice-Gerät können jeweils nur einer Konfiguration zugeordnet sein.
 
 Das Panel **Steuertage** wird einmalig in der Seitenleiste angelegt. Es ermöglicht allen angemeldeten Benutzern den Wechsel zwischen eingerichteten Kalendern und manuelle Korrekturen. Ist einer Person ein HA-Benutzer zugeordnet, öffnet sich dessen Kalender standardmäßig; die Auswahl bleibt jederzeit veränderbar.
 
@@ -29,7 +30,7 @@ Manuelle Korrekturen werden der betroffenen Person und dem angemeldeten HA-Benut
 
 ## Kalender und Panel
 
-Der Kalender zeigt Tagesstatus, Wochenenden, Monatsstatistik und dezente Hinweise auf manuell geänderte Tage. Manuelle Korrekturen lassen sich auf einen einzelnen Tag oder einen Zeitraum bis zu 366 Tagen anwenden. Das Panel übernimmt die aktiven Theme-Farben und den Hell-/Dunkelmodus von Home Assistant. Der **Konfigurator** zeigt die Personeneinstellungen, prüft benötigte Entitäten und führt direkt zu den Home-Assistant-Optionen. Er erklärt die automatische Erkennung und den festen Beta-Schwellwert von 30 Minuten. Der **Export** erlaubt einen Jahres- oder frei gewählten Zeitraum und erstellt CSV-, TXT- und HTML-Dateien mit Gesamtsummen, Monatsübersicht, Tagesliste und Prüfliste für ungeklärte oder noch laufende Erkennung. „Büro + Homeoffice“ wird als eigene Kategorie und als ein Arbeitstag gezählt. Eine JSON-Sicherung enthält den Verlauf der ausgewählten Person. Wiederherstellen ergänzt nur fehlende Datumswerte; vorhandene Tage werden beibehalten. Sicherung und Wiederherstellung erfordern einen Home-Assistant-Administrator. Die Auswertung berücksichtigt nur Tage, die von Steuertage erfasst wurden. Steuertage unterstützt die automatische Erfassung relevanter Daten auf Grundlage der in Home Assistant vorhandenen Erkennung; für Richtigkeit und Vollständigkeit der Steuererklärung ist der Nutzer selbst verantwortlich. Angaben ohne Gewähr.
+Der Kalender zeigt Tagesstatus, Wochenenden, Monatsstatistik und dezente Hinweise auf manuell geänderte Tage. Manuelle Korrekturen lassen sich auf einen einzelnen Tag oder einen Zeitraum bis zu 366 Tagen anwenden. Das Panel übernimmt die aktiven Theme-Farben und den Hell-/Dunkelmodus von Home Assistant. Der **Konfigurator** zeigt die Personeneinstellungen, prüft benötigte Entitäten und führt direkt zu den Home-Assistant-Optionen. Er erklärt die automatische Erkennung, den optionalen Arbeitskalender und den pro Person einstellbaren Schwellwert (Standard 120 Minuten). Der **Export** erlaubt einen Jahres- oder frei gewählten Zeitraum und erstellt CSV-, TXT- und HTML-Dateien mit Gesamtsummen, Monatsübersicht, Tagesliste und Prüfliste für ungeklärte oder noch laufende Erkennung. „Büro + Homeoffice“ wird als eigene Kategorie und als ein Arbeitstag gezählt. Eine JSON-Sicherung enthält den Verlauf der ausgewählten Person. Wiederherstellen ergänzt nur fehlende Datumswerte; vorhandene Tage werden beibehalten. Sicherung und Wiederherstellung erfordern einen Home-Assistant-Administrator. Die Auswertung berücksichtigt nur Tage, die von Steuertage erfasst wurden. Steuertage unterstützt die automatische Erfassung relevanter Daten auf Grundlage der in Home Assistant vorhandenen Erkennung; für Richtigkeit und Vollständigkeit der Steuererklärung ist der Nutzer selbst verantwortlich. Angaben ohne Gewähr.
 
 ## Hinweis zum Umstieg von HA Work-Log
 

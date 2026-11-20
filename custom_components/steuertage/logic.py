@@ -1,7 +1,13 @@
 """Pure classification helpers used by Steuertage."""
 from __future__ import annotations
 
-from .const import BETA_THRESHOLD_SECONDS, DOMAIN
+from .const import (
+    BETA_THRESHOLD_SECONDS,
+    CONF_DEVICE_TRACKER,
+    CONF_HOME_OFFICE_ENABLED,
+    CONF_WORK_SIGNAL,
+    DOMAIN,
+)
 
 
 def classify_day(
@@ -11,10 +17,13 @@ def classify_day(
     homeoffice_active: bool,
     office_source_valid: bool,
     homeoffice_source_valid: bool,
+    threshold_seconds: int = BETA_THRESHOLD_SECONDS,
+    homeoffice_enabled: bool = True,
 ) -> str:
-    """Classify a day from either independent 30-minute signal."""
-    office_qualifies = office_seconds >= BETA_THRESHOLD_SECONDS
-    homeoffice_qualifies = homeoffice_seconds >= BETA_THRESHOLD_SECONDS
+    """Classify a day from the configured qualifying signals."""
+    office_qualifies = office_seconds >= threshold_seconds
+    homeoffice_qualifies = homeoffice_enabled and homeoffice_seconds >= threshold_seconds
+    homeoffice_active = homeoffice_enabled and homeoffice_active
 
     if office_qualifies and homeoffice_qualifies:
         return "office_and_home_office"
@@ -22,7 +31,12 @@ def classify_day(
         return "office"
     if homeoffice_qualifies:
         return "home_office"
-    if office_active or homeoffice_active or office_seconds > 0 or homeoffice_seconds > 0:
+    if (
+        office_active
+        or homeoffice_active
+        or office_seconds > 0
+        or (homeoffice_enabled and homeoffice_seconds > 0)
+    ):
         return "tracking"
     if not office_source_valid or not homeoffice_source_valid:
         return "needs_review"
@@ -133,7 +147,16 @@ def find_person_configuration_conflicts(
         current = config.get("values", {})
         if person and current.get("person_entity") == person:
             errors.add("already_configured")
-        if tracker and current.get("homeoffice_device") == tracker:
+        homeoffice_enabled = values.get(
+            CONF_HOME_OFFICE_ENABLED,
+            bool(current.get(CONF_DEVICE_TRACKER) or current.get(CONF_WORK_SIGNAL)),
+        )
+        if (
+            homeoffice_enabled
+            and tracker
+            and current.get(CONF_HOME_OFFICE_ENABLED, True)
+            and current.get("homeoffice_device") == tracker
+        ):
             errors.add("device_already_configured")
         if user_id and current.get("ha_user_id") == user_id:
             errors.add("user_already_configured")

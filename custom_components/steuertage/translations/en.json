@@ -3,20 +3,25 @@
     "step": {
       "user": {
         "title": "Set up Steuertage",
-        "description": "Set up one person. A workday counts when the office zone or home-office detection is active for at least 30 minutes.",
+        "description": "Set up a person. Homeoffice tracking is optional; the optional work calendar limits office-zone detection to scheduled timed events. The threshold defaults to 120 minutes and can be changed.",
         "data": {
           "person_entity": "Person",
-          "home_zone": "Home zone",
-          "homeoffice_device": "Home-office device (device_tracker)",
+          "home_zone": "Home zone for Homeoffice",
+          "homeoffice_device": "Homeoffice device (device_tracker)",
           "office_zone": "Office zone (optional)",
-          "ha_user_id": "HA user for the default calendar (optional)"
+          "ha_user_id": "HA user for the default view (optional)",
+          "homeoffice_enabled": "Enable Homeoffice tracking",
+          "work_calendar": "Work calendar for shifts (optional)",
+          "threshold_minutes": "Minimum duration per signal (minutes; default 120)"
         }
       }
     },
     "error": {
       "already_configured": "A Steuertage is already set up for this person.",
       "device_already_configured": "This home-office device is already assigned to another person.",
-      "user_already_configured": "This HA user is already assigned as the default calendar for another person."
+      "user_already_configured": "This HA user is already assigned as the default calendar for another person.",
+      "home_zone_required": "Select a home zone for Homeoffice tracking or disable Homeoffice.",
+      "homeoffice_device_required": "Select a device_tracker or disable Homeoffice."
     },
     "abort": {
       "already_configured": "A Steuertage is already set up for this person."
@@ -26,19 +31,24 @@
     "step": {
       "init": {
         "title": "Steuertage settings",
-        "description": "Adjust person detection. Older Beta 7 entries can temporarily keep using the previous home-office sensor.",
+        "description": "Adjust this person's detection. Homeoffice is optional; a work calendar limits office-zone detection to timed shifts. The default threshold is 120 minutes.",
         "data": {
-          "home_zone": "Home zone",
-          "homeoffice_device": "Home-office device (device_tracker; leave empty for the previous Beta 7 detection)",
+          "home_zone": "Home zone for Homeoffice",
+          "homeoffice_device": "Homeoffice device (device_tracker)",
           "office_zone": "Office zone (optional)",
-          "ha_user_id": "HA user for the default calendar (optional)",
-          "work_signal": "Previous home-office sensor (Beta 7)"
+          "ha_user_id": "HA user for the default view (optional)",
+          "work_signal": "Previous Homeoffice sensor (Beta 7)",
+          "homeoffice_enabled": "Enable Homeoffice tracking",
+          "work_calendar": "Work calendar for shifts (optional)",
+          "threshold_minutes": "Minimum duration per signal (minutes; default 120)"
         }
       }
     },
     "error": {
       "device_already_configured": "This home-office device is already assigned to another person.",
-      "user_already_configured": "This HA user is already assigned as the default calendar for another person."
+      "user_already_configured": "This HA user is already assigned as the default calendar for another person.",
+      "home_zone_required": "Select a home zone for Homeoffice tracking or disable Homeoffice.",
+      "homeoffice_device_required": "Select a device_tracker or disable Homeoffice."
     }
   }
 }

@@ -19,7 +19,7 @@ async def async_setup_entry(
 ) -> None:
     """Create the person's home-office presence sensor when tracker-based setup is used."""
     coordinator: WorklogCoordinator = hass.data[DOMAIN][entry.entry_id]
-    if coordinator.legacy_mode:
+    if not coordinator.homeoffice_enabled or coordinator.legacy_mode:
         return
     async_add_entities([WorklogHomeOfficeSensor(coordinator, entry)])
 

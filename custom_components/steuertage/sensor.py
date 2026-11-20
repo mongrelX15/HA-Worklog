@@ -73,12 +73,21 @@ class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
     _attr_name = "Tagestyp"
     _attr_icon = "mdi:briefcase-clock"
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = DAY_TYPES
 
     def __init__(self, coordinator: WorklogCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_day_type"
         self._attr_device_info = _device_info(coordinator, entry)
+        options = [
+            day_type
+            for day_type in DAY_TYPES
+            if day_type not in {"home_office", "office_and_home_office"}
+            or coordinator.homeoffice_enabled
+        ]
+        current_type = coordinator.data.get("day_type")
+        if current_type and current_type not in options:
+            options.append(current_type)
+        self._attr_options = tuple(options)
 
     @property
     def native_value(self):

@@ -30,7 +30,7 @@ from .coordinator import DAY_TYPES, WorklogCoordinator
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
 PANEL_PATH = "steuertage"
-PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.2.0-beta.2"
+PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.2.0-beta.3"
 PANEL_STATIC_URL = "/steuertage_static"
 PANEL_SERVICE = "set_day_override"
 MANUAL_DAY_TYPES = set(DAY_TYPES) | {"automatic"}
@@ -175,6 +175,13 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
                 user = await hass.auth.async_get_user(changed_by)
             except (AttributeError, ValueError, HomeAssistantError):
                 user = None
+            if (
+                not coordinator.homeoffice_enabled
+                and day_type in {"home_office", "office_and_home_office"}
+            ):
+                raise ServiceValidationError(
+                    "Homeoffice-Tage sind für diese Person nicht aktiviert."
+                )
             await coordinator.async_set_day_override(
                 day,
                 day_type,
@@ -215,16 +222,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def refresh_interval(_now) -> None:
         await coordinator.async_refresh()
 
-    tracked = [
-        coordinator.person_entity,
-        coordinator.home_zone_entity,
-    ]
+    tracked = [coordinator.person_entity]
+    if coordinator.homeoffice_enabled and coordinator.home_zone_entity:
+        tracked.append(coordinator.home_zone_entity)
     if coordinator.homeoffice_device_entity:
         tracked.append(coordinator.homeoffice_device_entity)
     if coordinator.legacy_signal_entity:
         tracked.append(coordinator.legacy_signal_entity)
     if coordinator.office_zone_entity:
         tracked.append(coordinator.office_zone_entity)
+    if coordinator.work_calendar_entity:
+        tracked.append(coordinator.work_calendar_entity)
     remove_state_listener = async_track_state_change_event(hass, tracked, changed)
     remove_timer = async_track_time_interval(
         hass, refresh_interval, timedelta(minutes=1)

@@ -8,7 +8,11 @@ CONF_HOME_ZONE: Final = "home_zone"
 CONF_DEVICE_TRACKER: Final = "homeoffice_device"
 CONF_HA_USER_ID: Final = "ha_user_id"
 CONF_OFFICE_ZONE: Final = "office_zone"
-# Kept so existing options can be read safely; Beta uses a fixed threshold.
+CONF_HOME_OFFICE_ENABLED: Final = "homeoffice_enabled"
+CONF_WORK_CALENDAR: Final = "work_calendar"
+CONF_THRESHOLD_MINUTES: Final = "threshold_minutes"
+DEFAULT_THRESHOLD_MINUTES: Final = 120
+# Kept so older entries can still be read safely.
 CONF_MINIMUM_HOURS: Final = "minimum_hours"
 BETA_THRESHOLD_SECONDS: Final = 30 * 60
 DEFAULT_MINIMUM_HOURS: Final = 2.0

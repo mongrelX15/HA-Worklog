@@ -64,7 +64,9 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
             "worklog_office_zone_entity": self.coordinator.office_zone_entity,
             "worklog_device_tracker": self.coordinator.homeoffice_device_entity,
             "worklog_legacy_signal": self.coordinator.legacy_signal_entity,
-            "worklog_threshold_minutes": int(self.coordinator.threshold_seconds / 60),
+            "worklog_threshold_minutes": self.coordinator.threshold_minutes,
+            "worklog_homeoffice_enabled": self.coordinator.homeoffice_enabled,
+            "worklog_work_calendar_entity": self.coordinator.work_calendar_entity,
         }
 
     @property
