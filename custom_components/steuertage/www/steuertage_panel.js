@@ -346,9 +346,16 @@ class SteuertagePanel extends HTMLElement {
   }
 
   _applyMultiDragDate(date) {
-    const dates = new Set(this._selectedDates);
-    if (this._dragMultiAction === "add") dates.add(date);
-    else dates.delete(date);
+    const dates = new Set(this._dragBaseDates || this._selectedDates);
+    const from = this._dragStartDate < date ? this._dragStartDate : date;
+    const to = this._dragStartDate > date ? this._dragStartDate : date;
+    const start = new Date(from + "T12:00:00");
+    const end = new Date(to + "T12:00:00");
+    for (let cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+      const rangeDate = this._isoDate(cursor);
+      if (this._dragMultiAction === "add") dates.add(rangeDate);
+      else dates.delete(rangeDate);
+    }
     this._selectedDates = dates;
     this._selectionMode = "multiple";
     this._selected = dates.has(date) ? date : [...dates].sort().at(-1) || null;
@@ -359,7 +366,7 @@ class SteuertagePanel extends HTMLElement {
     const hint = this.shadowRoot.querySelector(".selection-hint");
     if (hint) hint.textContent = dates.size === 0
       ? "Keine Tage ausgewählt"
-      : dates.size === 1 ? "1 Tag ausgewählt" : dates.size + " einzelne Tage ausgewählt";
+      : dates.size === 1 ? "1 Tag ausgewählt" : dates.size + " Tage ausgewählt";
   }
 
   _updateVisibleDateSelection(dates) {
@@ -394,8 +401,12 @@ class SteuertagePanel extends HTMLElement {
       this._selected = null;
       this._selectedDates = new Set();
       this._rangeAnchorDate = null;
+      this._correctionFrom = "";
+      this._correctionTo = "";
       this._multiSelectMode = false;
       this._selectionMode = "single";
+      this._dragSelecting = false;
+      this._dragBaseDates = new Set();
       this._render();
       return;
     }
@@ -902,6 +913,7 @@ class SteuertagePanel extends HTMLElement {
         this._dragMultiAction = multiGesture
           ? (this._selectedDates.has(button.dataset.date) ? "remove" : "add")
           : null;
+        this._dragBaseDates = new Set(this._selectedDates || []);
         this._dragStartApplied = false;
         if (multiGesture) {
           this._selectionMode = "multiple";
