@@ -34,9 +34,4 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
-          # Temporary until the project owner selects and adds a license.
-          ignore: license
-      - name: Report remaining catalog requirement
-        run: |
-          echo "::warning::HACS license validation is temporarily ignored. Default catalog submission is not ready until a valid open-source license is selected and the ignore is removed."
-          echo "Remaining blocker: select and add an OSI-approved license, then remove the license ignore and confirm all checks pass." >> "$GITHUB_STEP_SUMMARY"
+          category: integration
