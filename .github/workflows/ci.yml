@@ -45,6 +45,13 @@ jobs:
             echo "No custom_components directory yet; Python syntax check skipped."
           fi
 
+      - name: Validate translations and panel script
+        run: |
+          python -m json.tool custom_components/ha_worklog/strings.json > /dev/null
+          python -m json.tool custom_components/ha_worklog/translations/de.json > /dev/null
+          python -m json.tool custom_components/ha_worklog/translations/en.json > /dev/null
+          node --check custom_components/ha_worklog/www/ha_worklog_panel.js
+
       - name: Run tests
         run: |
           if [ -d tests ]; then
