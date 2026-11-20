@@ -10,10 +10,9 @@
 Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → Steuertage** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
 
 - **Person**: Home-Assistant-Person
-- **Homeoffice-Erkennung**: optional; wenn aktiviert, wird eine Home-Zone und ein `device_tracker` benötigt
 - **Arbeitszone (Standort der Arbeit)**: verpflichtend; in dieser Zone wird ein Arbeitstag vor Ort erkannt
-- **Arbeitskalender verwenden (Ja/Nein)**: optional; bei Ja wählst du im nächsten Schritt einen in Home Assistant eingebundenen Kalender. Er begrenzt die Erkennung auf laufende zeitgebundene oder ganztägige Arbeitstermine. Bei Nein gilt reine Zonenerkennung.
 - **Schwellwert**: frei einstellbar in Stunden (0,5-Stunden-Schritte), Standardwert 2 Stunden
+- **Optionale Funktionen**: Nach den Pflichtangaben öffnet sich eine Auswahl. Dort kannst du Homeoffice-Erkennung und Arbeitskalender jeweils einzeln einrichten oder überspringen. Homeoffice fragt erst in seinem eigenen Schritt nach Home-Zone und `device_tracker`; der Arbeitskalender wird ebenfalls nur abgefragt, wenn du ihn auswählst.
 - **Standardkalender**: wird automatisch anhand des angemeldeten Benutzers und der Benutzerzuordnung in der jeweiligen Home-Assistant-Person ausgewählt
 
 Ist Homeoffice aktiviert, zählt das Signal nur, wenn die Person und der ausgewählte Tracker beide in der eingestellten Home-Zone erkannt werden. Ein fehlender oder nicht verfügbarer Tracker wird nicht als Homeoffice gezählt. Bei deaktiviertem Homeoffice werden Home-Zone und Tracker in der Einrichtung ausgeblendet und sind nicht erforderlich; Homeoffice-Typen entfallen im Kalender und in der Auswertung. Dieser Anwesenheitsstatus ist kein Nachweis tatsächlicher Arbeitsleistung.
