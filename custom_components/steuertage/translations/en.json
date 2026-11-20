@@ -16,7 +16,9 @@
         "menu_options": {
           "homeoffice": "Set up Homeoffice detection",
           "work_calendar": "Set up work calendar",
-          "finish": "Finish without more features"
+          "finish": "Finish without more features",
+          "disable_homeoffice": "Remove Homeoffice detection",
+          "disable_work_calendar": "Remove work calendar"
         }
       },
       "homeoffice": {
