@@ -55,10 +55,13 @@ class WorklogCalendar(CoordinatorEntity[WorklogCoordinator], CalendarEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Expose the panel's calendar-to-person mapping."""
+        person_state = self.hass.states.get(self.coordinator.person_entity)
         return {
             "worklog_person_entity": self.coordinator.person_entity,
             "worklog_person_name": self.coordinator.person_name,
-            "worklog_user_id": self.coordinator.ha_user_id,
+            "worklog_user_id": (
+                person_state.attributes.get("user_id") if person_state else None
+            ),
             "worklog_entry_id": self.coordinator.entry_id,
             "worklog_home_zone_entity": self.coordinator.home_zone_entity,
             "worklog_office_zone_entity": self.coordinator.office_zone_entity,

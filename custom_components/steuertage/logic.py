@@ -136,11 +136,10 @@ def find_person_configuration_conflicts(
     *,
     exclude_entry_id: str | None = None,
 ) -> set[str]:
-    """Find duplicate person, tracker, or default-user assignments."""
+    """Find duplicate person and Homeoffice tracker assignments."""
     errors: set[str] = set()
     person = values.get("person_entity")
     tracker = values.get("homeoffice_device")
-    user_id = values.get("ha_user_id") or None
     for config in configurations:
         if config.get("entry_id") == exclude_entry_id:
             continue
@@ -158,6 +157,4 @@ def find_person_configuration_conflicts(
             and current.get("homeoffice_device") == tracker
         ):
             errors.add("device_already_configured")
-        if user_id and current.get("ha_user_id") == user_id:
-            errors.add("user_already_configured")
     return errors

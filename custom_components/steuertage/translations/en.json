@@ -3,25 +3,39 @@
     "step": {
       "user": {
         "title": "Set up Steuertage",
-        "description": "Set up a person. Homeoffice tracking is optional; the optional work calendar limits office-zone detection to active timed or all-day work events. The threshold defaults to 2 hours and can be changed.",
+        "description": "Choose a person, its work location and the automatic-detection threshold. Homeoffice and an external work calendar are optional; their settings appear in the following step only when enabled. The default calendar follows the Home Assistant user linked to the selected Person in Home Assistant.",
         "data": {
           "person_entity": "Person",
+          "homeoffice_enabled": "Homeoffice detection (yes/no)",
+          "office_zone": "Work zone (work location)",
+          "work_calendar_enabled": "Use a work calendar (yes/no)",
+          "threshold_hours": "Minimum duration per signal (hours; default 2)"
+        }
+      },
+      "homeoffice": {
+        "title": "Homeoffice detection",
+        "description": "Select the home zone and the device tracker used for Homeoffice detection.",
+        "data": {
           "home_zone": "Home zone for Homeoffice",
           "homeoffice_device": "Homeoffice device (device_tracker)",
-          "office_zone": "Office zone (optional)",
-          "ha_user_id": "HA user for the default view (optional)",
-          "homeoffice_enabled": "Enable Homeoffice tracking",
-          "work_calendar": "Work calendar for shifts (optional)",
-          "threshold_hours": "Minimum duration per signal (hours; default 2)"
+          "work_signal": "Previous Homeoffice sensor (legacy setup)"
+        }
+      },
+      "work_calendar": {
+        "title": "Work calendar",
+        "description": "Choose the Home Assistant calendar that contains work appointments. Timed and all-day entries are supported.",
+        "data": {
+          "work_calendar": "Work calendar"
         }
       }
     },
     "error": {
       "already_configured": "A Steuertage is already set up for this person.",
       "device_already_configured": "This home-office device is already assigned to another person.",
-      "user_already_configured": "This HA user is already assigned as the default calendar for another person.",
       "home_zone_required": "Select a home zone for Homeoffice tracking or disable Homeoffice.",
-      "homeoffice_device_required": "Select a device_tracker or disable Homeoffice."
+      "homeoffice_device_required": "Select a device_tracker or disable Homeoffice.",
+      "office_zone_required": "Select the work zone (work location).",
+      "work_calendar_required": "Select a work calendar or turn off the work calendar option."
     },
     "abort": {
       "already_configured": "A Steuertage is already set up for this person."
@@ -31,24 +45,37 @@
     "step": {
       "init": {
         "title": "Steuertage settings",
-        "description": "Adjust this person's detection. Homeoffice is optional; a work calendar limits office-zone detection to active timed or all-day work events. The default threshold is 2 hours.",
+        "description": "Adjust the work zone, optional detection features and threshold. Conditional settings are shown in the following step. The default calendar follows the Home Assistant user linked to this Person in Home Assistant.",
+        "data": {
+          "homeoffice_enabled": "Homeoffice detection (yes/no)",
+          "office_zone": "Work zone (work location)",
+          "work_calendar_enabled": "Use a work calendar (yes/no)",
+          "threshold_hours": "Minimum duration per signal (hours; default 2)"
+        }
+      },
+      "homeoffice": {
+        "title": "Homeoffice detection",
+        "description": "Select the home zone and the device tracker used for Homeoffice detection.",
         "data": {
           "home_zone": "Home zone for Homeoffice",
           "homeoffice_device": "Homeoffice device (device_tracker)",
-          "office_zone": "Office zone (optional)",
-          "ha_user_id": "HA user for the default view (optional)",
-          "work_signal": "Previous Homeoffice sensor (Beta 7)",
-          "homeoffice_enabled": "Enable Homeoffice tracking",
-          "work_calendar": "Work calendar for shifts (optional)",
-          "threshold_hours": "Minimum duration per signal (hours; default 2)"
+          "work_signal": "Previous Homeoffice sensor (legacy setup)"
+        }
+      },
+      "work_calendar": {
+        "title": "Work calendar",
+        "description": "Choose the Home Assistant calendar that contains work appointments. Timed and all-day entries are supported.",
+        "data": {
+          "work_calendar": "Work calendar"
         }
       }
     },
     "error": {
       "device_already_configured": "This home-office device is already assigned to another person.",
-      "user_already_configured": "This HA user is already assigned as the default calendar for another person.",
       "home_zone_required": "Select a home zone for Homeoffice tracking or disable Homeoffice.",
-      "homeoffice_device_required": "Select a device_tracker or disable Homeoffice."
+      "homeoffice_device_required": "Select a device_tracker or disable Homeoffice.",
+      "office_zone_required": "Select the work zone (work location).",
+      "work_calendar_required": "Select a work calendar or turn off the work calendar option."
     }
   }
 }

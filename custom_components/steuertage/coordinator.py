@@ -17,7 +17,6 @@ from homeassistant.util import dt as dt_util
 from .const import (
     BETA_THRESHOLD_SECONDS,
     CONF_DEVICE_TRACKER,
-    CONF_HA_USER_ID,
     CONF_HOME_OFFICE_ENABLED,
     CONF_HOME_ZONE,
     CONF_OFFICE_ZONE,
@@ -66,7 +65,6 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if person_state
             else self.person_entity
         )
-        self.ha_user_id = config.get(CONF_HA_USER_ID)
         self.homeoffice_enabled = bool(config.get(CONF_HOME_OFFICE_ENABLED, True))
         self.home_zone_entity = (
             config.get(CONF_HOME_ZONE) or "zone.home"

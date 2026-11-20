@@ -91,15 +91,24 @@ class SteuertagePanel extends HTMLElement {
       const computed = getComputedStyle(element);
       for (let i = 0; i < computed.length; i++) {
         const name = computed[i];
-        if (name.startsWith('--')) {
+        if (name.startsWith('--') && !applied.has(name)) {
           const value = computed.getPropertyValue(name).trim();
           if (value) applied.set(name, value);
         }
       }
     };
-    readVariables(document.documentElement);
+    // HA applies user themes on its application shell, which may be several
+    // levels above a custom sidebar panel. Walk every ancestor so inherited
+    // theme variables reach this component's shadow root.
+    for (
+      let element = this.parentElement;
+      element;
+      element = element.parentElement || element.getRootNode?.().host || null
+    ) {
+      readVariables(element);
+    }
     readVariables(document.body);
-    readVariables(this.parentElement);
+    readVariables(document.documentElement);
     const themes = this._hass?.themes;
     const themeName = themes?.theme;
     const isDark = Boolean(themes?.darkMode);
@@ -152,8 +161,6 @@ class SteuertagePanel extends HTMLElement {
   _preferredCalendarEntity(calendars = this._calendarEntities()) {
     return calendars.find((item) => item.attributes.worklog_user_id &&
       item.attributes.worklog_user_id === this._activeUserId) ||
-      calendars.find((item) => this._calendarLabel(item).trim().toLocaleLowerCase() ===
-        (this._hass?.user?.name || "").trim().toLocaleLowerCase()) ||
       (calendars.length === 1 ? calendars[0] : undefined);
   }
 
@@ -356,9 +363,8 @@ class SteuertagePanel extends HTMLElement {
         ["Homeoffice-Erfassung", homeofficeEnabled ? "Aktiv" : "Deaktiviert"],
         ...(homeofficeEnabled ? [["Home-Zone", a.worklog_home_zone_entity],
           ["Homeoffice-Signal", a.worklog_device_tracker || a.worklog_legacy_signal || "Nicht eingerichtet"]] : []),
-        ["Büro-Zone", a.worklog_office_zone_entity || "Nicht eingerichtet"],
+        ["Arbeitszone (Standort der Arbeit)", a.worklog_office_zone_entity || "Nicht eingerichtet"],
         ["Arbeitskalender", workCalendar],
-        ["HA-Benutzer", a.worklog_user_id || "Automatische Zuordnung"],
         ["Schwellwert", thresholdLabel + " Stunden"]];
       return "<section class='config-card'><div class='config-title'><h3>" + this._escape(this._calendarLabel(calendar)) +
         "</h3><a href='/config/integrations/integration/steuertage#config_entry=" + encodeURIComponent(a.worklog_entry_id || "") +
@@ -366,7 +372,7 @@ class SteuertagePanel extends HTMLElement {
         this._escape(v || "Nicht eingerichtet") + "</dd></div>").join("") + "</dl>" +
         (issues.length ? "<div class='validation warning'><b>Bitte prüfen</b><ul>" + issues.map((issue) => "<li>" + this._escape(issue) + "</li>").join("") + "</ul></div>" :
         "<p class='validation ok'>Konfiguration und benötigte Entitäten sind verfügbar.</p>") +
-        (!a.worklog_office_zone_entity ? "<p class='muted'>Keine Büro-Zone hinterlegt: Büro-Tage werden nicht automatisch erkannt.</p>" : "") +
+        (!a.worklog_office_zone_entity ? "<p class='muted'>Keine Arbeitszone hinterlegt: Arbeitstage werden nicht automatisch erkannt.</p>" : "") +
         "</section>";
     }).join("");
     const calendarAttributes = this._calendarEntity()?.attributes || {};
@@ -376,9 +382,9 @@ class SteuertagePanel extends HTMLElement {
     const workCalendar = this._calendarEntity()?.attributes?.worklog_work_calendar_entity;
     return "<ha-card><h2>Konfigurator</h2><p>Hier siehst du die aktuellen Werte je Person. Über „Einstellungen öffnen“ kannst du sie in Home Assistant ändern.</p>" +
       (cards || "<p>Richte zuerst eine Person über Einstellungen → Geräte &amp; Dienste → Integration hinzufügen → Steuertage ein.</p>") +
-      "<section class='info-card'><h3>So funktioniert die automatische Erkennung</h3><p>Steuertage sammelt nur die Zeit, die zur Erkennung eines Tages nötig ist; im Kalender werden keine Stunden angezeigt.</p><ul>" +
-      "<li><b>Büro:</b> Die Person befindet sich in der ausgewählten Büro-Zone." +
-      (workCalendar ? " Der optionale Arbeitskalender begrenzt die Erkennung auf eingetragene zeitgebundene oder ganztägige Schichten." : " Ohne Arbeitskalender zählt die Anwesenheit in der Büro-Zone.") + "</li>" +
+      "<section class='info-card'><h3>So funktioniert die automatische Erkennung</h3><p>Steuertage sammelt nur die Zeit, die zur Erkennung eines Tages nötig ist; im Kalender werden keine Stunden angezeigt. Die Kalender-Standardansicht folgt der Home-Assistant-Person, die dem angemeldeten Benutzer in Home Assistant zugeordnet ist.</p><ul>" +
+      "<li><b>Arbeitszone:</b> Die Person befindet sich in der ausgewählten Arbeitszone." +
+      (workCalendar ? " Der optionale Arbeitskalender begrenzt die Erkennung auf eingetragene zeitgebundene oder ganztägige Schichten." : " Ohne Arbeitskalender zählt die Anwesenheit in der Arbeitszone.") + "</li>" +
       (homeofficeEnabled ? "<li><b>Homeoffice:</b> Die Person und der ausgewählte Tracker sind gleichzeitig in der Home-Zone.</li>" : "<li><b>Homeoffice:</b> Für diese Person deaktiviert.</li>") +
       "<li>Ein Signal zählt ab <b>" + threshold + " Stunden</b>. Der Wert lässt sich pro Person in den Einstellungen ändern.</li>" +
       "<li>Bis dahin erscheint „Erkennung läuft“. Bei fehlenden oder nicht verfügbaren benötigten Quellen erscheint „Bitte prüfen“.</li>" +
