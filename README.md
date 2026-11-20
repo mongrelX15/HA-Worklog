@@ -5,7 +5,7 @@
 
 **HA Work-Log** erkennt steuerlich relevante Arbeitstage. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
 
-## Beta 0.1.0-beta.9 – Multiuser- und Homeoffice-Vorschau
+## Beta 0.1.0-beta.10 – Multiuser- und Homeoffice-Vorschau
 
 Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → HA Work-Log** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
 
