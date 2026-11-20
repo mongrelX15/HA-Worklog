@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "HA Work-Log einrichten",
+        "title": "Steuertage einrichten",
         "description": "Wähle deine Person, ein Arbeitssignal und die Bürozone. Als Arbeitssignal eignet sich ein zuverlässiger Binary-Sensor, der während der Arbeit aktiv ist.",
         "data": {
           "person_entity": "Person",
@@ -13,13 +13,13 @@
       }
     },
     "abort": {
-      "already_configured": "Für diese Person ist bereits ein Work-Log eingerichtet."
+      "already_configured": "Für diese Person ist bereits ein Steuertage eingerichtet."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "HA Work-Log Einstellungen",
+        "title": "Steuertage Einstellungen",
         "data": {
           "person_entity": "Person",
           "work_signal": "Arbeitssignal",
