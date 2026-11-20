@@ -14,12 +14,12 @@
       }
     },
     "error": {
-      "already_configured": "A Work-Log is already set up for this person.",
+      "already_configured": "A Steuertage is already set up for this person.",
       "device_already_configured": "This home-office device is already assigned to another person.",
       "user_already_configured": "This HA user is already assigned as the default calendar for another person."
     },
     "abort": {
-      "already_configured": "A Work-Log is already set up for this person."
+      "already_configured": "A Steuertage is already set up for this person."
     }
   },
   "options": {
