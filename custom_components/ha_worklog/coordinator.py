@@ -22,7 +22,13 @@ from .const import (
     CONF_WORK_SIGNAL,
     DOMAIN,
 )
-from .logic import classify_day
+from .logic import (
+    append_manual_change,
+    classify_day,
+    detect_homeoffice,
+    make_storage_key,
+    normalize_day_record,
+)
 
 _LOGGER = logging.getLogger(__name__)
 DAY_TYPES = (
@@ -61,7 +67,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.office_zone_entity = config.get(CONF_OFFICE_ZONE) or None
         self.threshold_seconds = BETA_THRESHOLD_SECONDS
-        self.store = Store(hass, 1, f"{DOMAIN}_{entry.entry_id}")
+        self.store = Store(hass, 1, make_storage_key(entry.entry_id))
         self._office_seconds = 0.0
         self._homeoffice_seconds = 0.0
         self._last_update: datetime | None = None
@@ -117,37 +123,11 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @staticmethod
     def _normalize_record(record: dict[str, Any]) -> dict[str, Any]:
         """Migrate older daily records without dropping manual audit entries."""
-        office_seconds = float(record.get("office_seconds", 0))
-        homeoffice_seconds = float(record.get("homeoffice_seconds", 0))
-        legacy_seconds = float(record.get("seconds", 0))
-        legacy_type = record.get("day_type")
-        if not office_seconds and not homeoffice_seconds and legacy_seconds:
-            if legacy_type == "office" or record.get("location") == "office":
-                office_seconds = legacy_seconds
-            elif legacy_type == "home_office" or record.get("location") == "home":
-                homeoffice_seconds = legacy_seconds
-        day_type = record.get("day_type", "needs_review")
-        if day_type not in DAY_TYPES:
-            day_type = "needs_review"
-        automatic_day_type = record.get("automatic_day_type", day_type)
-        if automatic_day_type not in DAY_TYPES:
-            automatic_day_type = day_type
-        manual_override = record.get("manual_override")
-        if manual_override not in OVERRIDE_TYPES:
-            manual_override = None
-        change_history = record.get("change_history", [])
-        if not isinstance(change_history, list):
-            change_history = []
-        return {
-            "day_type": manual_override or day_type,
-            "automatic_day_type": automatic_day_type,
-            "manual_override": manual_override,
-            "office_seconds": round(office_seconds),
-            "homeoffice_seconds": round(homeoffice_seconds),
-            "change_history": [
-                item for item in change_history if isinstance(item, dict)
-            ],
-        }
+        return normalize_day_record(
+            record,
+            day_types=DAY_TYPES,
+            override_types=OVERRIDE_TYPES,
+        )
 
     def _history_record(self) -> dict[str, Any]:
         """Return the current record while preserving its manual change history."""
@@ -188,18 +168,16 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         old_value = existing.get("manual_override") or automatic
         override = None if day_type == "automatic" else day_type
         new_value = override or automatic
-        change_history = list(existing.get("change_history", []))
-        change_history.append(
-            {
-                "person_id": self.person_entity,
-                "changed_by": changed_by,
-                "changed_by_name": changed_by_name,
-                "timestamp": dt_util.utcnow().isoformat(),
-                "old_value": old_value,
-                "new_value": new_value,
-                "reason": (reason or "").strip() or None,
-            }
+        change_history = append_manual_change(
+            list(existing.get("change_history", [])),
+            person_id=self.person_entity,
+            changed_by=changed_by,
+            timestamp=dt_util.utcnow().isoformat(),
+            old_value=old_value,
+            new_value=new_value,
+            reason=reason,
         )
+        change_history[-1]["changed_by_name"] = changed_by_name
         self._history[key] = {
             "day_type": new_value,
             "automatic_day_type": automatic,
@@ -304,18 +282,13 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             homeoffice_active = bool(
                 self._homeoffice_source_valid and person_home and device_home
             )
-            if homeoffice_active:
-                self._homeoffice_reason = "person_and_device_in_home_zone"
-            elif not person_valid:
-                self._homeoffice_reason = "person_unavailable"
-            elif home_zone is None or home_zone.state in ("unknown", "unavailable"):
-                self._homeoffice_reason = "home_zone_unavailable"
-            elif not person_home:
-                self._homeoffice_reason = "person_outside_home_zone"
-            elif not device_valid:
-                self._homeoffice_reason = "device_unavailable"
-            else:
-                self._homeoffice_reason = "device_outside_home_zone"
+            homeoffice_active, self._homeoffice_reason = detect_homeoffice(
+                person_valid,
+                home_zone_valid,
+                device_valid,
+                person_home,
+                device_home,
+            )
 
         self._office_source_valid = bool(person_valid and office_zone_valid)
         return location, bool(person_valid), homeoffice_active
