@@ -1,5 +1,9 @@
 # Änderungsprotokoll
 
+## Noch nicht veröffentlicht
+
+- Kalender: Mehrfachauswahl durch Ziehen oder ⌘/Strg bleibt temporär; der eigene Mehrfachauswahl-Modus wird nur per Button aktiviert. „Auswahl aufheben“ setzt Auswahl und Modus zurück.
+
 ## 0.2.0-beta.13
 
 - Kalender: Bei mehreren ausgewählten Tagen zeigt die Bearbeitungsüberschrift jetzt den gesamten Zeitraum, zum Beispiel „12.11.2026 bis 16.11.2026“.
