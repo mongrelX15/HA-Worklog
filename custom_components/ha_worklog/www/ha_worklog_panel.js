@@ -6,6 +6,7 @@ class HAWorklogPanel extends HTMLElement {
     this._month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     this._selected = null;
     this._calendarEntityId = null;
+    this._calendarInitialized = false;
     this._haThemeVariables = new Set();
     this._events = [];
     this._loadedMonth = "";
@@ -18,9 +19,18 @@ class HAWorklogPanel extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     this._applyTheme(hass);
-    const calendar = this._calendarEntity();
-    if (!this._calendarEntityId || !this._calendarEntities().some((item) => item.entity_id === this._calendarEntityId)) {
+    const calendars = this._calendarEntities();
+    if (!this._calendarInitialized && calendars.length) {
+      const calendar = this._calendarEntity();
       this._calendarEntityId = calendar?.entity_id || null;
+      this._calendarInitialized = true;
+      this._loadedMonth = "";
+      this._events = [];
+    } else if (
+      this._calendarEntityId &&
+      !calendars.some((item) => item.entity_id === this._calendarEntityId)
+    ) {
+      this._calendarEntityId = null;
       this._loadedMonth = "";
       this._events = [];
     }
@@ -114,6 +124,7 @@ class HAWorklogPanel extends HTMLElement {
     try {
       this._unsubscribe = await this._hass.connection.subscribeMessage(
         (message) => {
+          if (this._calendarEntityId !== entityId) return;
           this._events = Array.isArray(message?.events)
             ? message.events
             : Array.isArray(message?.event?.events)
@@ -306,6 +317,7 @@ class HAWorklogPanel extends HTMLElement {
     });
     this.shadowRoot.querySelector("[data-calendar]")?.addEventListener("change", async (event) => {
       this._calendarEntityId = event.target.value || null;
+      this._calendarInitialized = true;
       this._loadedMonth = "";
       this._events = [];
       this._selected = null;
