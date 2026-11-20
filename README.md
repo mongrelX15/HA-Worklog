@@ -1,11 +1,11 @@
 # Steuertage
 
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Integration-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-1-0)
+[![Status](https://img.shields.io/badge/status-Beta-orange)](#beta-0-2-0-beta-1)
 
 **Steuertage** erfasst Büro- und Homeoffice-Tage für die Steuererklärung. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
 
-## Beta 0.1.0-beta.11 – Steuertage, Theme und Personenwechsel
+## Beta 0.2.0-beta.1 – Konfigurator und Jahres-Export
 
 Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → Steuertage** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
 
@@ -25,11 +25,11 @@ Jede Person erhält einen eigenen Kalender, Tagestyp-Sensor, Homeoffice-Sensor u
 
 Das Panel **Steuertage** wird einmalig in der Seitenleiste angelegt. Es ermöglicht allen angemeldeten Benutzern den Wechsel zwischen eingerichteten Kalendern und manuelle Korrekturen. Ist einer Person ein HA-Benutzer zugeordnet, öffnet sich dessen Kalender standardmäßig; die Auswahl bleibt jederzeit veränderbar.
 
-Manuelle Korrekturen werden der betroffenen Person und dem angemeldeten HA-Benutzer zugeordnet. Die Historie speichert Zeitpunkt, alten und neuen Status sowie optional einen Änderungsgrund. Ein übergebener Benutzername wird nicht als Identität verwendet.
+Manuelle Korrekturen werden der betroffenen Person und dem angemeldeten HA-Benutzer zugeordnet. Die Historie speichert Zeitpunkt sowie alten und neuen Status. Ein übergebener Benutzername wird nicht als Identität verwendet.
 
 ## Kalender und Panel
 
-Der Kalender zeigt Tagesstatus, Wochenenden, Monatsstatistik und dezente Hinweise auf manuell geänderte Tage. Das Theme des Home-Assistant-Benutzers wird übernommen. Die Reiter **Konfigurator** und **Export** sind vorbereitet; Sensoren, Zonen und Benutzer werden aktuell über die Integrationsoptionen angepasst, der Export-Reiter hat noch keine Exportfunktion.
+Der Kalender zeigt Tagesstatus, Wochenenden, Monatsstatistik und dezente Hinweise auf manuell geänderte Tage. Das Theme des Home-Assistant-Benutzers wird übernommen. Der **Konfigurator** zeigt Person, Home- und Büro-Zone, Tracker und Benutzerzuordnung je Einrichtung an und führt direkt zu den Home-Assistant-Optionen. Er erklärt die automatische Erkennung und den festen Beta-Schwellwert von 30 Minuten. Der **Export** erstellt CSV-, TXT- und HTML-Dateien mit Jahresstatistik, Tagesliste und Hinweisen für ungeklärte oder noch laufende Erkennung. „Büro + Homeoffice“ wird als eigene Kategorie und als ein Arbeitstag gezählt.
 
 ## Hinweis zum Umstieg von HA Work-Log
 
