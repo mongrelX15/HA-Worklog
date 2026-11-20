@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Steuertage einrichten",
+        "description": "Richte eine Person ein. Ein Arbeitstag zählt, sobald die Arbeitszone oder die Homeoffice-Erkennung mindestens 30 Minuten aktiv war.",
+        "data": {
+          "person_entity": "Person",
+          "home_zone": "Home-Zone",
+          "homeoffice_device": "Homeoffice-Gerät (device_tracker)",
+          "office_zone": "Büro-Zone (optional)",
+          "ha_user_id": "HA-Benutzer für die Standardansicht (optional)"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet.",
+      "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
+      "user_already_configured": "Dieser HA-Benutzer ist bereits einer anderen Person als Standardansicht zugeordnet."
+    },
+    "abort": {
+      "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Steuertage-Einstellungen",
+        "description": "Passe die Personenerkennung an. Ältere Beta-7-Einträge können vorübergehend weiter den bisherigen Homeoffice-Sensor verwenden.",
+        "data": {
+          "home_zone": "Home-Zone",
+          "homeoffice_device": "Homeoffice-Gerät (device_tracker; leer lassen für bisherige Beta-7-Erkennung)",
+          "office_zone": "Büro-Zone (optional)",
+          "ha_user_id": "HA-Benutzer für die Standardansicht (optional)",
+          "work_signal": "Bisheriger Homeoffice-Sensor (Beta-7)"
+        }
+      }
+    },
+    "error": {
+      "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
+      "user_already_configured": "Dieser HA-Benutzer ist bereits einer anderen Person als Standardansicht zugeordnet."
+    }
+  }
+}

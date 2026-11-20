@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Steuertage",
+        "description": "Set up one person. A workday counts when the office zone or home-office detection is active for at least 30 minutes.",
+        "data": {
+          "person_entity": "Person",
+          "home_zone": "Home zone",
+          "homeoffice_device": "Home-office device (device_tracker)",
+          "office_zone": "Office zone (optional)",
+          "ha_user_id": "HA user for the default calendar (optional)"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "A Steuertage is already set up for this person.",
+      "device_already_configured": "This home-office device is already assigned to another person.",
+      "user_already_configured": "This HA user is already assigned as the default calendar for another person."
+    },
+    "abort": {
+      "already_configured": "A Steuertage is already set up for this person."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Steuertage settings",
+        "description": "Adjust person detection. Older Beta 7 entries can temporarily keep using the previous home-office sensor.",
+        "data": {
+          "home_zone": "Home zone",
+          "homeoffice_device": "Home-office device (device_tracker; leave empty for the previous Beta 7 detection)",
+          "office_zone": "Office zone (optional)",
+          "ha_user_id": "HA user for the default calendar (optional)",
+          "work_signal": "Previous home-office sensor (Beta 7)"
+        }
+      }
+    },
+    "error": {
+      "device_already_configured": "This home-office device is already assigned to another person.",
+      "user_already_configured": "This HA user is already assigned as the default calendar for another person."
+    }
+  }
+}

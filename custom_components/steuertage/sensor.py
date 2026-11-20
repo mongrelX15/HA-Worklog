@@ -1,29 +1,47 @@
-"""Sensors exposed by HA Work-Log."""
+"""Sensors exposed by Steuertage."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import WorklogCoordinator
+from .coordinator import DAY_TYPES, WorklogCoordinator
 
-DAY_TYPES = ["no_work", "tracking", "home_office", "office", "needs_review"]
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Create work log sensors."""
+    """Create work-log sensors."""
     coordinator: WorklogCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([WorklogDurationSensor(coordinator, entry), WorklogDaySensor(coordinator, entry)])
+    async_add_entities(
+        [
+            WorklogDurationSensor(coordinator, entry),
+            WorklogDaySensor(coordinator, entry),
+        ]
+    )
+
+
+def _device_info(coordinator: WorklogCoordinator, entry: ConfigEntry) -> dict:
+    return {
+        "identifiers": {(DOMAIN, entry.entry_id)},
+        "name": f"Steuertage – {coordinator.person_name}",
+        "manufacturer": "Steuertage",
+        "model": "Steuertage 0.1.0",
+    }
+
 
 class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
-    """Accumulated work signal duration for today."""
+    """Internal diagnostic duration; the dashboard does not use this sensor."""
 
     _attr_has_entity_name = True
-    _attr_name = "Arbeitszeit heute"
+    _attr_name = "Erkennungszeit heute"
     _attr_native_unit_of_measurement = "h"
     _attr_native_state_class = SensorStateClass.MEASUREMENT
     _attr_suggested_display_precision = 2
@@ -31,12 +49,7 @@ class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity)
     def __init__(self, coordinator: WorklogCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_work_duration"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "HA Work-Log",
-            "manufacturer": "HA Work-Log",
-            "model": "Beta",
-        }
+        self._attr_device_info = _device_info(coordinator, entry)
 
     @property
     def native_value(self):
@@ -47,14 +60,14 @@ class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity)
         data = self.coordinator.data
         return {
             "datum": data["date"],
-            "arbeitszeit_sekunden": data["seconds"],
-            "arbeitsort": data["location"],
-            "arbeitszeit_erkannt": data["active"],
-            "mindestarbeitszeit_stunden": data["minimum_hours"],
+            "arbeitszone_sekunden": data["office_seconds"],
+            "homeoffice_sekunden": data["homeoffice_seconds"],
+            "schwellwert_minuten": data["threshold_minutes"],
         }
 
+
 class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
-    """Explainable classification of today's work day."""
+    """Expose the effective day classification."""
 
     _attr_has_entity_name = True
     _attr_name = "Tagestyp"
@@ -65,12 +78,7 @@ class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
     def __init__(self, coordinator: WorklogCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_day_type"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "HA Work-Log",
-            "manufacturer": "HA Work-Log",
-            "model": "Beta",
-        }
+        self._attr_device_info = _device_info(coordinator, entry)
 
     @property
     def native_value(self):
@@ -80,9 +88,14 @@ class WorklogDaySensor(CoordinatorEntity[WorklogCoordinator], SensorEntity):
     def extra_state_attributes(self):
         data = self.coordinator.data
         return {
+            "person": self.coordinator.person_entity,
             "datum": data["date"],
-            "mindestarbeitszeit_stunden": data["minimum_hours"],
-            "arbeitszeit_stunden": data["hours"],
-            "arbeitsort": data["location"],
-            "hinweis": "Kurzzeitige Sensorunterbrechungen und Home-Assistant-Ausfälle können Messlücken verursachen.",
+            "schwellwert_minuten": data["threshold_minutes"],
+            "arbeitszone_erreichbar": data["office_source_valid"],
+            "homeoffice_erkennung_erreichbar": data["homeoffice_source_valid"],
+            "person_status": data["person_status"],
+            "geraet_status": data["device_status"],
+            "erkennungsgrund": data["homeoffice_reason"],
+            "arbeitszone_aktiv": data["office_active"],
+            "homeoffice_aktiv": data["homeoffice_active"],
         }
