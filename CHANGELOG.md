@@ -3,7 +3,8 @@
 ## 0.2.0-beta.14
 
 - Tastenkürzel: A setzt Arbeitsstätte, H Homeoffice (falls aktiviert), U Urlaub, K Krankheit, E automatische Erkennung und 0 manuell „Kein Arbeitstag“.
-- Tastenkürzel greifen nur bei ausgewähltem Tag und nicht während der Eingabe in Text- oder Formularfelder. Wiederholte Tastaturereignisse werden ignoriert.
+- Tastenkürzel greifen auch auf mehrere markierte Tage und nicht während der Eingabe in Text- oder Formularfelder. Wiederholte Tastaturereignisse werden ignoriert.
+- Esc leert temporäre und dauerhafte Mehrfachauswahlen und beendet den Mehrfachmodus.
 - Manuell auf „Kein Arbeitstag“ gesetzte Tage bleiben im Kalender als manuelle Änderungen sichtbar, werden aber in Auswertungen und Exportdateien vollständig ausgelassen.
 - Legende: automatische Erkennung und alle manuellen Tagestypen zeigen jetzt die passenden Tasten.
 - Konfiguration: Die automatische Erkennung wird über ein Info-Symbol erklärt. Der Hilfetext beschreibt jetzt die Arbeitszone, optionale Homeoffice-Erkennung, den optionalen Arbeitskalender inklusive ganztägiger Einträge und die personenspezifische Mindestdauer.
