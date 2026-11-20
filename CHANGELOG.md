@@ -1,6 +1,6 @@
 # Änderungsprotokoll
 
-## Noch nicht veröffentlicht
+## 0.2.0-beta.12
 
 - Konfigurationsübersicht: Angaben kompakter und gleichmäßiger anordnen.
 - Kalender: Tagestypen, Mischtage, manuelle Änderungen und Tastenkürzel in einer gemeinsamen farbigen Legende zusammenfassen.
@@ -8,3 +8,6 @@
 - Einrichtung und Einstellungen: alle Angaben auf einer Seite bündeln. Arbeitsstätte und Mindestanwesenheit sind erforderlich; Homeoffice-Erkennung und Arbeitskalender sind optional.
 - Einrichtung: die Mindestanwesenheit erklärt, wie lange ein Aufenthalt in der Arbeitszone beziehungsweise bei aktivierter Homeoffice-Erkennung in der Home-Zone dauern muss, bevor ein Tag automatisch zählt. Standardwert: 2 Stunden.
 - Bedienoberfläche: den Inhaltsbereich scrollbar machen, damit die Ansicht über dem fixierten Home-Assistant-Theme-Hintergrund bewegt werden kann.
+
+- Oberfläche: Fußzeile auf allen Tabs mittig ausrichten.
+- Daten & Export: Von- und Bis-Datumsfelder bei Hover und Fokus mit einem klaren Rahmen hervorheben.
