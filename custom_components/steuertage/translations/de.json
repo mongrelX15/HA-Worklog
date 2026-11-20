@@ -35,7 +35,8 @@
       "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung oder deaktiviere Homeoffice.",
       "homeoffice_device_required": "Wähle einen device_tracker oder deaktiviere Homeoffice.",
       "office_zone_required": "Wähle die Arbeitszone (Standort der Arbeit).",
-      "work_calendar_required": "Wähle einen Arbeitskalender oder deaktiviere die Arbeitskalender-Option."
+      "work_calendar_required": "Wähle einen Arbeitskalender oder deaktiviere die Arbeitskalender-Option.",
+      "user_already_configured": "Diese ältere HA-Benutzerzuordnung ist bereits einer anderen Person zugewiesen."
     },
     "abort": {
       "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet."
@@ -75,7 +76,8 @@
       "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung oder deaktiviere Homeoffice.",
       "homeoffice_device_required": "Wähle einen device_tracker oder deaktiviere Homeoffice.",
       "office_zone_required": "Wähle die Arbeitszone (Standort der Arbeit).",
-      "work_calendar_required": "Wähle einen Arbeitskalender oder deaktiviere die Arbeitskalender-Option."
+      "work_calendar_required": "Wähle einen Arbeitskalender oder deaktiviere die Arbeitskalender-Option.",
+      "user_already_configured": "Diese ältere HA-Benutzerzuordnung ist bereits einer anderen Person zugewiesen."
     }
   }
 }

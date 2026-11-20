@@ -140,6 +140,7 @@ def find_person_configuration_conflicts(
     errors: set[str] = set()
     person = values.get("person_entity")
     tracker = values.get("homeoffice_device")
+    legacy_user_id = values.get("ha_user_id") or None
     for config in configurations:
         if config.get("entry_id") == exclude_entry_id:
             continue
@@ -157,4 +158,6 @@ def find_person_configuration_conflicts(
             and current.get("homeoffice_device") == tracker
         ):
             errors.add("device_already_configured")
+        if legacy_user_id and current.get("ha_user_id") == legacy_user_id:
+            errors.add("user_already_configured")
     return errors

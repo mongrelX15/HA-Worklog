@@ -35,7 +35,8 @@
       "home_zone_required": "Select a home zone for Homeoffice tracking or disable Homeoffice.",
       "homeoffice_device_required": "Select a device_tracker or disable Homeoffice.",
       "office_zone_required": "Select the work zone (work location).",
-      "work_calendar_required": "Select a work calendar or turn off the work calendar option."
+      "work_calendar_required": "Select a work calendar or turn off the work calendar option.",
+      "user_already_configured": "This legacy HA user mapping is already assigned to another person."
     },
     "abort": {
       "already_configured": "A Steuertage is already set up for this person."
@@ -75,7 +76,8 @@
       "home_zone_required": "Select a home zone for Homeoffice tracking or disable Homeoffice.",
       "homeoffice_device_required": "Select a device_tracker or disable Homeoffice.",
       "office_zone_required": "Select the work zone (work location).",
-      "work_calendar_required": "Select a work calendar or turn off the work calendar option."
+      "work_calendar_required": "Select a work calendar or turn off the work calendar option.",
+      "user_already_configured": "This legacy HA user mapping is already assigned to another person."
     }
   }
 }
