@@ -475,11 +475,12 @@ class SteuertagePanel extends HTMLElement {
       r.type === "tracking" ? "Erkennung noch nicht abgeschlossen" : "—") + "</td></tr>").join("") + "</tbody></table></div>" :
       "<p>Für den gewählten Zeitraum gibt es keine gespeicherten Tage.</p>";
     const disabled = rows === null ? "disabled" : "";
+    const currentYear = new Date().getFullYear();
     return "<ha-card><header class='view-header'><div><span class='eyebrow'>AUSWERTUNG</span><h2>Export</h2><p>Steuerlich relevante Tage auswählen, prüfen und herunterladen.</p></div><span class='header-badge'>CSV · TXT · HTML</span></header>" +
       "<section class='info-card export-check " + (openItems.length ? "has-issues" : "all-clear") + "'><h3>Vor dem Export prüfen</h3>" + checklist + (rows === null ? "" : "<p class='muted'>" + counts.manual + " manuell geänderte Tage im Zeitraum.</p>") + "</section>" +
       "<section class='export-period'><div class='section-heading'><div><span class='eyebrow'>ZEITRAUM</span><h3>Auswertung eingrenzen</h3></div>" + person + "</div><div class='export-controls'>" +
       "<div class='preset-row'>" +
-      [this._exportYear, this._exportYear - 1, this._exportYear - 2].map((year) => "<button class='export-button' data-period='year' data-year='" + year + "'>Steuerjahr " + year + "</button>").join("") +
+      [currentYear, currentYear - 1, currentYear - 2].map((year) => "<button class='export-button' data-period='year' data-year='" + year + "'>Steuerjahr " + year + "</button>").join("") +
       "<button class='export-button' data-period='month'>Dieser Monat</button><button class='export-button' data-period='week'>Diese Woche</button></div>" +
       "<label>Von <input data-export-from type='date' value='" + this._exportFrom + "'></label>" +
       "<label>Bis <input data-export-to type='date' value='" + this._exportTo + "'></label>" +
