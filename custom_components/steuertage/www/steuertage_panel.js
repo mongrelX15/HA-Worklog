@@ -40,7 +40,7 @@ class SteuertagePanel extends HTMLElement {
       item.attributes.worklog_person_name,
       item.attributes.worklog_user_id,
       item.attributes.worklog_homeoffice_enabled,
-      item.attributes.worklog_threshold_minutes,
+      item.attributes.worklog_threshold_hours,
       item.attributes.worklog_work_calendar_entity,
     ].join(":")).join("|");
     const initial = !this._hasReceivedHass;
@@ -350,6 +350,8 @@ class SteuertagePanel extends HTMLElement {
       const workCalendar = a.worklog_work_calendar_entity
         ? (this._hass.states[a.worklog_work_calendar_entity]?.attributes?.friendly_name || a.worklog_work_calendar_entity)
         : "Nicht ausgewählt – reine Zonenerkennung";
+      const thresholdHours = Number(a.worklog_threshold_hours ?? (a.worklog_threshold_minutes != null ? a.worklog_threshold_minutes / 60 : 2));
+      const thresholdLabel = thresholdHours.toLocaleString(this._hass?.locale?.language || "de-DE", { maximumFractionDigits: 1 });
       const rows = [["Person", a.worklog_person_entity],
         ["Homeoffice-Erfassung", homeofficeEnabled ? "Aktiv" : "Deaktiviert"],
         ...(homeofficeEnabled ? [["Home-Zone", a.worklog_home_zone_entity],
@@ -357,7 +359,7 @@ class SteuertagePanel extends HTMLElement {
         ["Büro-Zone", a.worklog_office_zone_entity || "Nicht eingerichtet"],
         ["Arbeitskalender", workCalendar],
         ["HA-Benutzer", a.worklog_user_id || "Automatische Zuordnung"],
-        ["Schwellwert", (a.worklog_threshold_minutes || 120) + " Minuten"]];
+        ["Schwellwert", thresholdLabel + " Stunden"]];
       return "<section class='config-card'><div class='config-title'><h3>" + this._escape(this._calendarLabel(calendar)) +
         "</h3><a href='/config/integrations/integration/steuertage#config_entry=" + encodeURIComponent(a.worklog_entry_id || "") +
         "'>Einstellungen öffnen</a></div><dl>" + rows.map(([k,v]) => "<div><dt>" + k + "</dt><dd>" +
@@ -367,16 +369,18 @@ class SteuertagePanel extends HTMLElement {
         (!a.worklog_office_zone_entity ? "<p class='muted'>Keine Büro-Zone hinterlegt: Büro-Tage werden nicht automatisch erkannt.</p>" : "") +
         "</section>";
     }).join("");
-    const threshold = this._calendarEntity()?.attributes?.worklog_threshold_minutes || 120;
+    const calendarAttributes = this._calendarEntity()?.attributes || {};
+    const threshold = Number(calendarAttributes.worklog_threshold_hours ?? (calendarAttributes.worklog_threshold_minutes != null ? calendarAttributes.worklog_threshold_minutes / 60 : 2))
+      .toLocaleString(this._hass?.locale?.language || "de-DE", { maximumFractionDigits: 1 });
     const homeofficeEnabled = this._homeOfficeEnabled();
     const workCalendar = this._calendarEntity()?.attributes?.worklog_work_calendar_entity;
     return "<ha-card><h2>Konfigurator</h2><p>Hier siehst du die aktuellen Werte je Person. Über „Einstellungen öffnen“ kannst du sie in Home Assistant ändern.</p>" +
       (cards || "<p>Richte zuerst eine Person über Einstellungen → Geräte &amp; Dienste → Integration hinzufügen → Steuertage ein.</p>") +
       "<section class='info-card'><h3>So funktioniert die automatische Erkennung</h3><p>Steuertage sammelt nur die Zeit, die zur Erkennung eines Tages nötig ist; im Kalender werden keine Stunden angezeigt.</p><ul>" +
       "<li><b>Büro:</b> Die Person befindet sich in der ausgewählten Büro-Zone." +
-      (workCalendar ? " Der optionale Arbeitskalender begrenzt die Erkennung auf eingetragene zeitgebundene Schichten; ganztägige Termine zählen nicht." : " Ohne Arbeitskalender zählt die Anwesenheit in der Büro-Zone.") + "</li>" +
+      (workCalendar ? " Der optionale Arbeitskalender begrenzt die Erkennung auf eingetragene zeitgebundene oder ganztägige Schichten." : " Ohne Arbeitskalender zählt die Anwesenheit in der Büro-Zone.") + "</li>" +
       (homeofficeEnabled ? "<li><b>Homeoffice:</b> Die Person und der ausgewählte Tracker sind gleichzeitig in der Home-Zone.</li>" : "<li><b>Homeoffice:</b> Für diese Person deaktiviert.</li>") +
-      "<li>Ein Signal zählt ab <b>" + threshold + " Minuten</b>. Der Wert lässt sich pro Person in den Einstellungen ändern.</li>" +
+      "<li>Ein Signal zählt ab <b>" + threshold + " Stunden</b>. Der Wert lässt sich pro Person in den Einstellungen ändern.</li>" +
       "<li>Bis dahin erscheint „Erkennung läuft“. Bei fehlenden oder nicht verfügbaren benötigten Quellen erscheint „Bitte prüfen“.</li>" +
       "<li>Urlaub, Krankheit und abweichende Erkennung kannst du im Kalender manuell setzen. Der Änderungsverlauf dokumentiert Änderungen.</li></ul></section></ha-card>";
   }

@@ -62,6 +62,7 @@ class WorklogDurationSensor(CoordinatorEntity[WorklogCoordinator], SensorEntity)
             "datum": data["date"],
             "arbeitszone_sekunden": data["office_seconds"],
             "homeoffice_sekunden": data["homeoffice_seconds"],
+            "schwellwert_stunden": data["threshold_hours"],
             "schwellwert_minuten": data["threshold_minutes"],
         }
 

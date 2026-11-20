@@ -22,9 +22,11 @@ from .const import (
     CONF_HOME_ZONE,
     CONF_OFFICE_ZONE,
     CONF_PERSON,
+    CONF_THRESHOLD_HOURS,
     CONF_THRESHOLD_MINUTES,
     CONF_WORK_CALENDAR,
     CONF_WORK_SIGNAL,
+    DEFAULT_THRESHOLD_HOURS,
     DEFAULT_THRESHOLD_MINUTES,
     DOMAIN,
 )
@@ -84,11 +86,14 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.office_zone_entity = config.get(CONF_OFFICE_ZONE) or None
         self.work_calendar_entity = config.get(CONF_WORK_CALENDAR) or None
-        self.threshold_minutes = max(
-            1,
-            min(1440, int(config.get(CONF_THRESHOLD_MINUTES, DEFAULT_THRESHOLD_MINUTES))),
-        )
-        self.threshold_seconds = self.threshold_minutes * 60
+        raw_threshold_hours = config.get(CONF_THRESHOLD_HOURS)
+        if raw_threshold_hours is None:
+            raw_threshold_hours = (
+                float(config.get(CONF_THRESHOLD_MINUTES, DEFAULT_THRESHOLD_MINUTES)) / 60
+            )
+        self.threshold_hours = max(0.5, min(24.0, float(raw_threshold_hours)))
+        self.threshold_minutes = round(self.threshold_hours * 60)
+        self.threshold_seconds = round(self.threshold_hours * 3600)
         self.store = Store(hass, 1, make_storage_key(entry.entry_id))
         self._office_seconds = 0.0
         self._homeoffice_seconds = 0.0
@@ -399,7 +404,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return location, bool(person_valid), homeoffice_active
 
     def _work_calendar_allows_office(self, now: datetime) -> bool:
-        """Allow office-zone accumulation only during a timed calendar event."""
+        """Allow office-zone accumulation during a timed or all-day work event."""
         if not self.work_calendar_entity:
             return True
         state = self.hass.states.get(self.work_calendar_entity)
@@ -413,15 +418,23 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         end_value = state.attributes.get("end_time")
         if not isinstance(start_value, str) or not isinstance(end_value, str):
             return False
-        # All-day calendar events have date-only values and must not activate
-        # work-zone detection for an entire day.
-        if "T" not in start_value or "T" not in end_value:
+        local_now = dt_util.as_local(now)
+        has_start_time = "T" in start_value
+        has_end_time = "T" in end_value
+        if has_start_time != has_end_time:
             return False
+        if not has_start_time:
+            try:
+                start_date = date.fromisoformat(start_value[:10])
+                end_date = date.fromisoformat(end_value[:10])
+            except ValueError:
+                return False
+            # Calendar all-day event end dates are exclusive.
+            return start_date <= local_now.date() < end_date
         start = dt_util.parse_datetime(start_value)
         end = dt_util.parse_datetime(end_value)
         if start is None or end is None:
             return False
-        local_now = dt_util.as_local(now)
         if start.tzinfo is None:
             start = start.replace(tzinfo=local_now.tzinfo)
         else:
@@ -491,6 +504,7 @@ class WorklogCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "office_active": self._office_active,
             "homeoffice_active": self._homeoffice_active,
             "location": self._location,
+            "threshold_hours": self.threshold_hours,
             "threshold_minutes": self.threshold_minutes,
             "homeoffice_enabled": self.homeoffice_enabled,
             "work_calendar_entity": self.work_calendar_entity,

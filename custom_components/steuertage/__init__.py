@@ -30,7 +30,7 @@ from .coordinator import DAY_TYPES, WorklogCoordinator
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
 PANEL_PATH = "steuertage"
-PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.2.0-beta.3"
+PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.2.0-beta.3-threshold-hours"
 PANEL_STATIC_URL = "/steuertage_static"
 PANEL_SERVICE = "set_day_override"
 MANUAL_DAY_TYPES = set(DAY_TYPES) | {"automatic"}

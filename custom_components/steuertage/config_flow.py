@@ -15,9 +15,11 @@ from .const import (
     CONF_HOME_ZONE,
     CONF_OFFICE_ZONE,
     CONF_PERSON,
+    CONF_THRESHOLD_HOURS,
     CONF_THRESHOLD_MINUTES,
     CONF_WORK_CALENDAR,
     CONF_WORK_SIGNAL,
+    DEFAULT_THRESHOLD_HOURS,
     DEFAULT_THRESHOLD_MINUTES,
     DOMAIN,
 )
@@ -79,14 +81,19 @@ def _schema(
         selector.EntitySelectorConfig(domain="calendar")
     )
 
+    legacy_minutes = defaults.get(CONF_THRESHOLD_MINUTES)
+    default_hours = defaults.get(
+        CONF_THRESHOLD_HOURS,
+        float(legacy_minutes) / 60 if legacy_minutes is not None else DEFAULT_THRESHOLD_HOURS,
+    )
     fields[vol.Optional(
-        CONF_THRESHOLD_MINUTES,
-        default=int(defaults.get(CONF_THRESHOLD_MINUTES, DEFAULT_THRESHOLD_MINUTES)),
+        CONF_THRESHOLD_HOURS,
+        default=float(default_hours),
     )] = selector.NumberSelector(
         selector.NumberSelectorConfig(
-            min=1,
-            max=1440,
-            step=1,
+            min=0.5,
+            max=24,
+            step=0.5,
             mode=NumberSelectorMode.BOX,
         )
     )
@@ -162,8 +169,16 @@ def _normalize_values(values: dict[str, Any]) -> dict[str, Any]:
         CONF_HA_USER_ID,
     ):
         values[key] = values.get(key) or None
-    values[CONF_THRESHOLD_MINUTES] = int(
-        values.get(CONF_THRESHOLD_MINUTES, DEFAULT_THRESHOLD_MINUTES)
+    legacy_minutes = values.pop(CONF_THRESHOLD_MINUTES, None)
+    if CONF_THRESHOLD_HOURS not in values:
+        values[CONF_THRESHOLD_HOURS] = (
+            float(legacy_minutes) / 60
+            if legacy_minutes is not None
+            else DEFAULT_THRESHOLD_HOURS
+        )
+    values[CONF_THRESHOLD_HOURS] = max(
+        0.5,
+        min(24.0, round(float(values[CONF_THRESHOLD_HOURS]) * 2) / 2),
     )
     values[CONF_HOME_OFFICE_ENABLED] = bool(
         values.get(CONF_HOME_OFFICE_ENABLED, True)

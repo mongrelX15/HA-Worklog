@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Set up Steuertage",
-        "description": "Set up a person. Homeoffice tracking is optional; the optional work calendar limits office-zone detection to scheduled timed events. The threshold defaults to 120 minutes and can be changed.",
+        "description": "Set up a person. Homeoffice tracking is optional; the optional work calendar limits office-zone detection to active timed or all-day work events. The threshold defaults to 2 hours and can be changed.",
         "data": {
           "person_entity": "Person",
           "home_zone": "Home zone for Homeoffice",
@@ -12,7 +12,7 @@
           "ha_user_id": "HA user for the default view (optional)",
           "homeoffice_enabled": "Enable Homeoffice tracking",
           "work_calendar": "Work calendar for shifts (optional)",
-          "threshold_minutes": "Minimum duration per signal (minutes; default 120)"
+          "threshold_hours": "Minimum duration per signal (hours; default 2)"
         }
       }
     },
@@ -31,7 +31,7 @@
     "step": {
       "init": {
         "title": "Steuertage settings",
-        "description": "Adjust this person's detection. Homeoffice is optional; a work calendar limits office-zone detection to timed shifts. The default threshold is 120 minutes.",
+        "description": "Adjust this person's detection. Homeoffice is optional; a work calendar limits office-zone detection to active timed or all-day work events. The default threshold is 2 hours.",
         "data": {
           "home_zone": "Home zone for Homeoffice",
           "homeoffice_device": "Homeoffice device (device_tracker)",
@@ -40,7 +40,7 @@
           "work_signal": "Previous Homeoffice sensor (Beta 7)",
           "homeoffice_enabled": "Enable Homeoffice tracking",
           "work_calendar": "Work calendar for shifts (optional)",
-          "threshold_minutes": "Minimum duration per signal (minutes; default 120)"
+          "threshold_hours": "Minimum duration per signal (hours; default 2)"
         }
       }
     },
