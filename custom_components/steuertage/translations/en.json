@@ -12,13 +12,14 @@
       },
       "features": {
         "title": "Optional features",
-        "description": "Choose a feature to set it up. Afterwards, you can configure another feature or finish setup.",
+        "description": "Choose a feature to set it up, or return to edit the required details. Afterwards, you can configure another feature or finish setup.",
         "menu_options": {
           "homeoffice": "Set up Homeoffice detection",
           "work_calendar": "Set up work calendar",
           "finish": "Finish without more features",
           "disable_homeoffice": "Remove Homeoffice detection",
-          "disable_work_calendar": "Remove work calendar"
+          "disable_work_calendar": "Remove work calendar",
+          "basics": "Back to required details"
         }
       },
       "homeoffice": {
@@ -39,6 +40,15 @@
       },
       "finish": {
         "title": "Finish setup"
+      },
+      "basics": {
+        "title": "Required setup details",
+        "description": "Update the person, work location or threshold, then continue with the optional features.",
+        "data": {
+          "person_entity": "Person",
+          "office_zone": "Work location (zone)",
+          "threshold_hours": "Minimum duration per signal (hours; default 2)"
+        }
       }
     },
     "error": {
