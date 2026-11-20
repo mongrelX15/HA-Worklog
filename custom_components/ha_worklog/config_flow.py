@@ -40,7 +40,12 @@ def _schema(
         default=defaults.get(CONF_HOME_ZONE) or "zone.home",
     )] = selector.EntitySelector(selector.EntitySelectorConfig(domain="zone"))
 
-    fields[vol.Required(CONF_DEVICE_TRACKER)] = selector.EntitySelector(
+    tracker_key = (
+        vol.Required(CONF_DEVICE_TRACKER)
+        if include_person
+        else vol.Optional(CONF_DEVICE_TRACKER, default=defaults.get(CONF_DEVICE_TRACKER) or "")
+    )
+    fields[tracker_key] = selector.EntitySelector(
         selector.EntitySelectorConfig(domain="device_tracker")
     )
 
@@ -124,8 +129,7 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             values[CONF_HA_USER_ID] = values.get(CONF_HA_USER_ID) or None
             self._person_entity = values[CONF_PERSON]
             await self.async_set_unique_id(self._person_entity)
-            if self._abort_if_unique_id_configured():
-                return self.async_abort(reason="already_configured")
+            self._abort_if_unique_id_configured()
 
             errors = {key: key for key in _find_conflicts(self.hass, values)}
             if not errors:
