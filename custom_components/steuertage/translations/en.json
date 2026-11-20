@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Set up Steuertage",
-        "description": "First choose the person, work location and threshold. The work location means the place you travel to for work, whose visits may be relevant to your commute-distance records. You can then set up optional features one at a time or skip them.",
+        "description": "First choose the person, work location and threshold. The work location means the place you travel to for work, whose visits may be relevant to your commute-distance records. More settings are available on the next page, where you can configure optional features or skip them.",
         "data": {
           "person_entity": "Person",
           "office_zone": "Work location (zone)",
