@@ -806,10 +806,10 @@ class SteuertagePanel extends HTMLElement {
         this._dragMultiAction = multiGesture
           ? (this._selectedDates.has(button.dataset.date) ? "remove" : "add")
           : null;
+        this._dragStartApplied = false;
         if (multiGesture) {
           this._selectionMode = "multiple";
           this._selected = button.dataset.date;
-          this._applyMultiDragDate(button.dataset.date);
         } else {
           this._rangeAnchorDate = button.dataset.date;
           this._selected = button.dataset.date;
@@ -834,6 +834,10 @@ class SteuertagePanel extends HTMLElement {
         const date = button.dataset.date;
         if (date !== this._dragStartDate) this._dragMoved = true;
         if (this._dragMultiGesture) {
+          if (!this._dragStartApplied) {
+            this._applyMultiDragDate(this._dragStartDate);
+            this._dragStartApplied = true;
+          }
           this._applyMultiDragDate(date);
           return;
         }
