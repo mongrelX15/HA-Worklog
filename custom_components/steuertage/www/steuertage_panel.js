@@ -262,12 +262,12 @@ class SteuertagePanel extends HTMLElement {
 
   _type(event) {
     const summary = (event?.summary || "").toLowerCase();
-    if (summary.includes("büro- und") || summary.includes("arbeit vor ort + homeoffice")) {
+    if (summary.includes("büro- und") || summary.includes("arbeitsstätte + homeoffice") || summary.includes("arbeit vor ort + homeoffice")) {
       const primary = (event?.description || "").match(/STEUERTAGE_PRIMARY:(office|home_office)/);
       return primary?.[1] || "office";
     }
     if (summary.includes("homeoffice")) return "home_office";
-    if (summary.includes("bürotag") || summary.includes("arbeit vor ort")) return "office";
+    if (summary.includes("bürotag") || summary.includes("arbeitsstätte") || summary.includes("arbeit vor ort")) return "office";
     if (summary.includes("urlaub")) return "vacation";
     if (summary.includes("krankheit")) return "sick_leave";
     if (summary.includes("prüfen")) return "needs_review";
@@ -752,7 +752,7 @@ class SteuertagePanel extends HTMLElement {
       !(selectedEvent.description || "").includes("Manuell geändert zu:");
     const selectedType = automaticSelection ? "automatic" : detectedType;
     const selectedLabel = (automaticSelection
-      ? "Automatisch · " + this._label(detectedType)
+      ? "Automatische Erkennung · " + (detectedType ? this._label(detectedType) : "Noch kein Eintrag")
       : this._label(detectedType)) + (this._isMixedEvent(selectedEvent) ? " · Mischtag" : "");
     const selectedDates = this._selectedDates || new Set(this._selected ? [this._selected] : []);
     const selectedDateCount = selectedDates.size;
