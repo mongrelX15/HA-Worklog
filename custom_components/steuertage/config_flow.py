@@ -190,7 +190,7 @@ class WorklogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Return to and update the required setup details."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            values = _normalize_base(dict(user_input))
+            values = _normalize_base({**self._draft_config, **user_input})
             errors = _base_errors(values)
             if not errors:
                 person_entity = values[CONF_PERSON]
