@@ -16,7 +16,9 @@
         "menu_options": {
           "homeoffice": "Homeoffice-Erkennung einrichten",
           "work_calendar": "Arbeitskalender einrichten",
-          "finish": "Ohne weitere Funktionen abschließen"
+          "finish": "Ohne weitere Funktionen abschließen",
+          "disable_homeoffice": "Homeoffice-Erkennung entfernen",
+          "disable_work_calendar": "Arbeitskalender entfernen"
         }
       },
       "homeoffice": {
