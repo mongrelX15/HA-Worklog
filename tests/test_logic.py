@@ -14,6 +14,10 @@ logic = module_from_spec(spec)
 sys.modules[spec.name] = logic
 spec.loader.exec_module(logic)
 classify_day = logic.classify_day
+detect_homeoffice = logic.detect_homeoffice
+append_manual_change = logic.append_manual_change
+make_storage_key = logic.make_storage_key
+normalize_day_record = logic.normalize_day_record
 
 
 def test_below_threshold_is_tracking():
@@ -38,3 +42,73 @@ def test_missing_data_needs_review():
 
 def test_inactive_empty_day():
     assert classify_day(0, 0, False, False, True, True) == "no_work"
+
+
+def test_homeoffice_requires_person_and_device_in_home_zone():
+    assert detect_homeoffice(True, True, True, True, True) == (
+        True,
+        "person_and_device_in_home_zone",
+    )
+    assert detect_homeoffice(True, True, True, True, False) == (
+        False,
+        "device_outside_home_zone",
+    )
+
+
+def test_unavailable_homeoffice_inputs_fail_closed():
+    assert detect_homeoffice(False, True, True, True, True) == (
+        False,
+        "person_unavailable",
+    )
+    assert detect_homeoffice(True, False, True, True, True) == (
+        False,
+        "home_zone_unavailable",
+    )
+    assert detect_homeoffice(True, True, False, True, True) == (
+        False,
+        "device_unavailable",
+    )
+
+
+def test_each_person_gets_separate_persistent_storage():
+    assert make_storage_key("entry-a") != make_storage_key("entry-b")
+
+
+def test_manual_change_history_appends_and_keeps_identity():
+    history = append_manual_change(
+        [{"old_value": "tracking"}],
+        person_id="person.fiona",
+        changed_by="user-marcel",
+        timestamp="2026-11-20T10:00:00+00:00",
+        old_value="tracking",
+        new_value="office",
+        reason="Termin im Büro",
+    )
+    assert len(history) == 2
+    assert history[-1] == {
+        "person_id": "person.fiona",
+        "changed_by": "user-marcel",
+        "timestamp": "2026-11-20T10:00:00+00:00",
+        "old_value": "tracking",
+        "new_value": "office",
+        "reason": "Termin im Büro",
+    }
+
+
+def test_legacy_record_migration_preserves_manual_history():
+    audit = [{"person_id": "person.fiona", "changed_by": "user-marcel"}]
+    migrated = normalize_day_record(
+        {
+            "date": "2026-11-19",
+            "seconds": 1800,
+            "day_type": "home_office",
+            "manual_override": "vacation",
+            "change_history": audit,
+        },
+        day_types=("no_work", "tracking", "home_office", "office", "vacation", "needs_review"),
+        override_types=("no_work", "tracking", "home_office", "office", "vacation"),
+    )
+    assert migrated["office_seconds"] == 0
+    assert migrated["homeoffice_seconds"] == 1800
+    assert migrated["day_type"] == "vacation"
+    assert migrated["change_history"] == audit
