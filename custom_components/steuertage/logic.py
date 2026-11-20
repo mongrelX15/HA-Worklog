@@ -111,12 +111,19 @@ def normalize_day_record(
     day_type = record.get("day_type", "needs_review")
     if day_type not in day_types:
         day_type = "needs_review"
-    automatic_day_type = record.get("automatic_day_type", day_type)
-    if automatic_day_type not in day_types:
-        automatic_day_type = day_type
     manual_override = record.get("manual_override")
     if manual_override not in override_types:
         manual_override = None
+    automatic_day_type = record.get("automatic_day_type", day_type)
+    if automatic_day_type not in day_types:
+        automatic_day_type = "needs_review"
+    # Absence types are only available as manual overrides in Steuertage.
+    # Older records may lack a separate automatic type, so never reuse an
+    # illness or vacation value as the result of automatic detection.
+    if automatic_day_type in {"vacation", "sick_leave"}:
+        automatic_day_type = "needs_review"
+    if day_type in {"vacation", "sick_leave"} and manual_override is None:
+        manual_override = day_type
     change_history = record.get("change_history", [])
     if not isinstance(change_history, list):
         change_history = []
