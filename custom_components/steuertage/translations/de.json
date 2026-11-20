@@ -14,18 +14,18 @@
       }
     },
     "error": {
-      "already_configured": "Für diese Person ist bereits ein Work-Log eingerichtet.",
+      "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet.",
       "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
       "user_already_configured": "Dieser HA-Benutzer ist bereits einer anderen Person als Standardansicht zugeordnet."
     },
     "abort": {
-      "already_configured": "Für diese Person ist bereits ein Work-Log eingerichtet."
+      "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Steuertage Einstellungen",
+        "title": "Steuertage-Einstellungen",
         "description": "Passe die Personenerkennung an. Ältere Beta-7-Einträge können vorübergehend weiter den bisherigen Homeoffice-Sensor verwenden.",
         "data": {
           "home_zone": "Home-Zone",
