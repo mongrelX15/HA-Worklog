@@ -3,10 +3,10 @@
     "step": {
       "user": {
         "title": "Steuertage einrichten",
-        "description": "Lege zuerst die Person, die verpflichtende Arbeitszone (Standort der Arbeit) und die Mindestdauer fest. Danach kannst du optionale Funktionen einzeln einrichten oder überspringen.",
+        "description": "Lege zuerst Person, Arbeitsstätte und Schwellwert fest. Mit Arbeitsstätte ist der Ort gemeint, zu dem du für deine Arbeit fährst und dessen Besuche für Wegstrecken-Angaben relevant sein können. Danach kannst du optionale Funktionen einzeln einrichten oder überspringen.",
         "data": {
           "person_entity": "Person",
-          "office_zone": "Arbeitszone (Standort der Arbeit)",
+          "office_zone": "Arbeitsstätte (Zone)",
           "threshold_hours": "Mindestdauer pro Signal (Stunden; Standard 2)"
         }
       },
@@ -58,9 +58,9 @@
     "step": {
       "init": {
         "title": "Steuertage-Einstellungen",
-        "description": "Passe Person, verpflichtende Arbeitszone und Mindestdauer an. Danach kannst du optionale Funktionen einrichten, ändern oder deaktivieren.",
+        "description": "Passe Person, Arbeitsstätte und Schwellwert an. Mit Arbeitsstätte ist der Ort gemeint, zu dem du für deine Arbeit fährst und dessen Besuche für Wegstrecken-Angaben relevant sein können. Danach kannst du optionale Funktionen einrichten, ändern oder deaktivieren.",
         "data": {
-          "office_zone": "Arbeitszone (Standort der Arbeit)",
+          "office_zone": "Arbeitsstätte (Zone)",
           "threshold_hours": "Mindestdauer pro Signal (Stunden; Standard 2)"
         }
       },
