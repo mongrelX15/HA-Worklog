@@ -2,11 +2,14 @@
 
 ## 0.2.0-beta.14
 
+- Tastenkürzel: A setzt Arbeitsstätte, H Homeoffice (falls aktiviert), U Urlaub, K Krankheit, E automatische Erkennung und 0 manuell „Kein Arbeitstag“.
+- Tastenkürzel greifen nur bei ausgewähltem Tag und nicht während der Eingabe in Text- oder Formularfelder. Wiederholte Tastaturereignisse werden ignoriert.
+- Manuell auf „Kein Arbeitstag“ gesetzte Tage bleiben im Kalender als manuelle Änderungen sichtbar, werden aber in Auswertungen und Exportdateien vollständig ausgelassen.
+- Legende: automatische Erkennung und alle manuellen Tagestypen zeigen jetzt die passenden Tasten.
 - Konfiguration: Die automatische Erkennung wird über ein Info-Symbol erklärt. Der Hilfetext beschreibt jetzt die Arbeitszone, optionale Homeoffice-Erkennung, den optionalen Arbeitskalender inklusive ganztägiger Einträge und die personenspezifische Mindestdauer.
 - Konfiguration: Im Infofenster gibt es direkte Links zum Repository und zum Melden von Fragen oder Änderungswünschen.
 - Kalender: Ziehen oder ⌘/Strg-Klick markiert Tage vorübergehend mehrfach, ohne den dauerhaften Mehrfachauswahl-Modus einzuschalten.
 - Kalender: Der eigene Mehrfachauswahl-Modus lässt sich gezielt aktivieren. „Auswahl aufheben“ leert die Auswahl und beendet den Modus.
-
 ## 0.2.0-beta.13
 
 - Kalender: Bei mehreren ausgewählten Tagen zeigt die Bearbeitungsüberschrift jetzt den gesamten Zeitraum, zum Beispiel „12.11.2026 bis 16.11.2026“.
