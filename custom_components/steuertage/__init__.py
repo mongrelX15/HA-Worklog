@@ -30,7 +30,7 @@ from .coordinator import DAY_TYPES, WorklogCoordinator
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
 PANEL_PATH = "steuertage"
-PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.2.0-beta.4-calendar-export"
+PANEL_MODULE = "/steuertage_static/steuertage_panel.js?v=0.2.0-beta.5-panel-refresh"
 PANEL_STATIC_URL = "/steuertage_static"
 PANEL_SERVICE = "set_day_override"
 MANUAL_DAY_TYPES = set(DAY_TYPES) | {"automatic"}
@@ -142,16 +142,19 @@ async def _async_setup_panel(hass: HomeAssistant) -> None:
         websocket_api.async_register_command(hass, restore_history)
         panel_data["backup_commands_registered"] = True
 
-    if not frontend.async_panel_exists(hass, PANEL_PATH):
-        await panel_custom.async_register_panel(
-            hass=hass,
-            frontend_url_path=PANEL_PATH,
-            webcomponent_name="steuertage-panel",
-            sidebar_title="Steuertage",
-            sidebar_icon="mdi:calendar-check",
-            module_url=PANEL_MODULE,
-            config={},
-        )
+    # Refresh the panel registration on reload so Home Assistant uses the
+    # current module URL after a HACS update.
+    if frontend.async_panel_exists(hass, PANEL_PATH):
+        frontend.async_remove_panel(hass, PANEL_PATH, warn_if_unknown=False)
+    await panel_custom.async_register_panel(
+        hass=hass,
+        frontend_url_path=PANEL_PATH,
+        webcomponent_name="steuertage-panel",
+        sidebar_title="Steuertage",
+        sidebar_icon="mdi:calendar-check",
+        module_url=PANEL_MODULE,
+        config={},
+    )
 
     if not hass.services.has_service(DOMAIN, PANEL_SERVICE):
         async def handle_day_override(call: ServiceCall) -> None:

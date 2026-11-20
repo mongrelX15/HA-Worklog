@@ -5,7 +5,7 @@
 
 **Steuertage** erfasst Tage mit Arbeit vor Ort und Homeoffice für die Steuererklärung. Erfasste Zeit dient ausschließlich zur Berechnung, ob die Tagesschwelle erreicht wurde; im Kalender werden keine Arbeitsstunden angezeigt.
 
-## Beta 0.2.0-beta.4 – Kalender, Export und Wiederherstellung
+## Beta 0.2.0-beta.5 – Panel-Aktualisierung und Kalenderverbesserungen
 
 Die Integration wird unter **Einstellungen → Geräte & Dienste → Integration hinzufügen → Steuertage** eingerichtet. Pro Person wird eine eigene Instanz angelegt:
 
@@ -58,10 +58,11 @@ Steuertage wird mit KI-Unterstützung entwickelt (Vibecoding). Anforderungen und
 Beta-Versionen können unvollständig sein oder Fehler enthalten. Ein Test in einer separaten Home-Assistant-Testinstanz wird empfohlen.
 
 
-### Änderungen in Beta 0.2.0-beta.4
+### Änderungen in Beta 0.2.0-beta.5
 
 - Der Kalender richtet sich nach der Spracheinstellung von Home Assistant und zeigt Datumsangaben lokalisiert an.
 - Tagestypen sind in der Kalenderauswahl klar hervorgehoben. Tage lassen sich durch Ziehen über den Kalender als Zeitraum auswählen und gemeinsam ändern.
 - Die Bezeichnung „Bürotag“ wurde durch „Arbeit vor Ort“ ersetzt.
 - Im Export gibt es Schnellwahl für die Steuerjahre, den aktuellen Monat und die aktuelle Woche. Die Prüfliste steht über den Zeitraumfiltern.
-- Sicherungen können entweder fehlende Tage ergänzen und lokale Änderungen nach dem Sicherungszeitpunkt bewahren oder die gesicherten Einträge für enthaltene Tage ersetzen. Nicht enthaltene Tage bleiben erhalten.
+- Sicherungen können fehlende Tage ergänzen und lokale Änderungen nach dem Sicherungszeitpunkt bewahren oder gesicherte Einträge für enthaltene Tage ersetzen. Nicht enthaltene Tage bleiben erhalten.
+- Die Panel-Registrierung wird beim Neuladen der Integration aktualisiert, damit Home Assistant das neue JavaScript nach einem HACS-Update verwendet.
