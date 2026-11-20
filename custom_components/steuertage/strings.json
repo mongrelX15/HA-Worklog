@@ -3,18 +3,25 @@
     "step": {
       "user": {
         "title": "Steuertage einrichten",
-        "description": "Wähle Person, Arbeitsstandort und Schwellwert. Die Schalter blenden Zusatzfelder nicht sofort im selben Bildschirm ein: Nach dem Absenden dieses Schritts zeigt Home Assistant für jede aktivierte Funktion einen eigenen Eingabeschritt. Homeoffice und Arbeitskalender sind optional. Die Standardansicht folgt dem in Home Assistant angemeldeten Benutzer.",
+        "description": "Lege zuerst die Person, die verpflichtende Arbeitszone (Standort der Arbeit) und die Mindestdauer fest. Danach kannst du optionale Funktionen einzeln einrichten oder überspringen.",
         "data": {
           "person_entity": "Person",
-          "homeoffice_enabled": "Homeoffice-Erkennung verwenden (Ja/Nein)",
           "office_zone": "Arbeitszone (Standort der Arbeit)",
-          "work_calendar_enabled": "Arbeitskalender verwenden (Ja/Nein)",
           "threshold_hours": "Mindestdauer pro Signal (Stunden; Standard 2)"
+        }
+      },
+      "features": {
+        "title": "Optionale Funktionen",
+        "description": "Wähle eine Funktion aus, um sie einzurichten. Du kannst danach weitere Funktionen einrichten oder die Einrichtung abschließen.",
+        "menu_options": {
+          "homeoffice": "Homeoffice-Erkennung einrichten",
+          "work_calendar": "Arbeitskalender einrichten",
+          "finish": "Ohne weitere Funktionen abschließen"
         }
       },
       "homeoffice": {
         "title": "Homeoffice-Erkennung",
-        "description": "Dieser separate Eingabeschritt erscheint, wenn die Homeoffice-Erkennung im vorherigen Schritt aktiviert wurde. Wähle deine Home-Zone und das Gerät aus der Home-Assistant-Geräteliste.",
+        "description": "Wähle die Home-Zone und das Gerät aus, mit dem Homeoffice erkannt wird.",
         "data": {
           "home_zone": "Home-Zone für Homeoffice",
           "homeoffice_device": "Gerät für die Homeoffice-Erkennung",
@@ -23,19 +30,22 @@
       },
       "work_calendar": {
         "title": "Arbeitskalender",
-        "description": "Dieser separate Eingabeschritt erscheint, wenn der Arbeitskalender im vorherigen Schritt aktiviert wurde. Wähle einen in Home Assistant eingebundenen Kalender. Zeitgebundene und ganztägige Einträge werden unterstützt.",
+        "description": "Wähle einen in Home Assistant eingebundenen Kalender. Zeitgebundene und ganztägige Einträge werden berücksichtigt.",
         "data": {
           "work_calendar": "Arbeitskalender"
         }
+      },
+      "finish": {
+        "title": "Einrichtung abschließen"
       }
     },
     "error": {
       "already_configured": "Für diese Person ist bereits eine Steuertage-Konfiguration eingerichtet.",
       "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
-      "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung oder deaktiviere Homeoffice.",
-      "homeoffice_device_required": "Wähle ein Gerät für die Homeoffice-Erkennung aus oder deaktiviere die Homeoffice-Erkennung.",
+      "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung.",
+      "homeoffice_device_required": "Wähle ein Gerät für die Homeoffice-Erkennung aus.",
       "office_zone_required": "Wähle die Arbeitszone (Standort der Arbeit).",
-      "work_calendar_required": "Wähle einen Arbeitskalender oder deaktiviere die Arbeitskalender-Option.",
+      "work_calendar_required": "Wähle einen Arbeitskalender.",
       "user_already_configured": "Diese ältere HA-Benutzerzuordnung ist bereits einer anderen Person zugewiesen."
     },
     "abort": {
@@ -46,17 +56,26 @@
     "step": {
       "init": {
         "title": "Steuertage-Einstellungen",
-        "description": "Passe Arbeitszone, optionale Erkennungen und Schwellwert an. Einstellungen zu aktivierten Funktionen erscheinen im nächsten Schritt. Die Standardansicht folgt dem Home-Assistant-Benutzer, der in Home Assistant mit dieser Person verknüpft ist.",
+        "description": "Passe Person, verpflichtende Arbeitszone und Mindestdauer an. Danach kannst du optionale Funktionen einrichten, ändern oder deaktivieren.",
         "data": {
-          "homeoffice_enabled": "Homeoffice-Erkennung verwenden (Ja/Nein)",
           "office_zone": "Arbeitszone (Standort der Arbeit)",
-          "work_calendar_enabled": "Arbeitskalender verwenden (Ja/Nein)",
           "threshold_hours": "Mindestdauer pro Signal (Stunden; Standard 2)"
+        }
+      },
+      "manage": {
+        "title": "Optionale Funktionen",
+        "description": "Wähle eine Funktion zum Einrichten oder Ändern. Aktive Funktionen kannst du hier auch deaktivieren.",
+        "menu_options": {
+          "homeoffice": "Homeoffice-Erkennung einrichten oder ändern",
+          "work_calendar": "Arbeitskalender einrichten oder ändern",
+          "disable_homeoffice": "Homeoffice-Erkennung deaktivieren",
+          "disable_work_calendar": "Arbeitskalender deaktivieren",
+          "finish": "Änderungen speichern"
         }
       },
       "homeoffice": {
         "title": "Homeoffice-Erkennung",
-        "description": "Wähle deine Home-Zone und das Gerät aus der Home-Assistant-Geräteliste, mit dem Homeoffice erkannt werden soll.",
+        "description": "Wähle die Home-Zone und das Gerät aus, mit dem Homeoffice erkannt wird.",
         "data": {
           "home_zone": "Home-Zone für Homeoffice",
           "homeoffice_device": "Gerät für die Homeoffice-Erkennung",
@@ -65,18 +84,27 @@
       },
       "work_calendar": {
         "title": "Arbeitskalender",
-        "description": "Wähle den in Home Assistant eingebundenen Kalender mit deinen Arbeitsterminen. Zeitgebundene und ganztägige Einträge werden unterstützt.",
+        "description": "Wähle den in Home Assistant eingebundenen Kalender mit deinen Arbeitsterminen. Zeitgebundene und ganztägige Einträge werden berücksichtigt.",
         "data": {
           "work_calendar": "Arbeitskalender"
         }
+      },
+      "disable_homeoffice": {
+        "title": "Homeoffice-Erkennung deaktivieren"
+      },
+      "disable_work_calendar": {
+        "title": "Arbeitskalender deaktivieren"
+      },
+      "finish": {
+        "title": "Änderungen speichern"
       }
     },
     "error": {
       "device_already_configured": "Dieses Homeoffice-Gerät ist bereits einer anderen Person zugeordnet.",
-      "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung oder deaktiviere Homeoffice.",
-      "homeoffice_device_required": "Wähle ein Gerät für die Homeoffice-Erkennung aus oder deaktiviere die Homeoffice-Erkennung.",
+      "home_zone_required": "Wähle eine Home-Zone für die Homeoffice-Erkennung.",
+      "homeoffice_device_required": "Wähle ein Gerät für die Homeoffice-Erkennung aus.",
       "office_zone_required": "Wähle die Arbeitszone (Standort der Arbeit).",
-      "work_calendar_required": "Wähle einen Arbeitskalender oder deaktiviere die Arbeitskalender-Option.",
+      "work_calendar_required": "Wähle einen Arbeitskalender.",
       "user_already_configured": "Diese ältere HA-Benutzerzuordnung ist bereits einer anderen Person zugewiesen."
     }
   }
