@@ -2,6 +2,8 @@
 
 ## Noch nicht veröffentlicht
 
+- Kalender: „Mehrfachauswahl beenden“ hebt jetzt zugleich alle markierten Tage und den Zeitraum auf.
+- Tastenkürzel: Die Kürzel H und K wurden entfernt; Homeoffice und Krankheit bleiben über die Auswahlbuttons verfügbar.
 - Tastenkürzel: Großbuchstaben funktionieren auch mit gedrückter Umschalttaste; Ziffer 0 wird über Haupttastenreihe und Ziffernblock erkannt. Weitere Kürzel während eines Speichervorgangs werden nacheinander verarbeitet.
 - Tastenkürzel: Escape hebt die Auswahl inklusive sichtbarer Zeitraum-Umrandung auf.
 - Kalender: Ziehen im Mehrfachauswahl-Modus markiert oder entfernt den gesamten Bereich zwischen Start- und Zieltag.
